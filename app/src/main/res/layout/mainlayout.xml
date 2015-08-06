@@ -168,7 +168,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:visibility="visible"
+            android:visibility="gone"
             android:paddingTop="40dp"
             android:id="@+id/relativeLayout_num">
 
@@ -309,7 +309,7 @@
             android:id="@+id/relativeLayout_navi"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:visibility="gone"
+            android:visibility="visible"
             android:layout_centerInParent="true"
             android:layout_marginTop="55dp">
 
