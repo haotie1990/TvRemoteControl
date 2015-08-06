@@ -146,30 +146,31 @@
 
         <ImageButton
             android:id="@+id/btn_n_left"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/img_left"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:src="@drawable/btn_prev"
             android:background="@null"
             android:alpha="0xff"
-            android:layout_alignParentLeft="true"
-            android:layout_centerVertical="true"/>
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"/>
 
         <ImageButton
             android:id="@+id/btn_n_right"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/img_right"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:src="@drawable/btn_next"
             android:background="@null"
             android:alpha="0xff"
-            android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"/>
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"/>
 
         <RelativeLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
             android:visibility="gone"
-            android:paddingTop="40dp"
+            android:paddingTop="3dp"
+            android:layout_marginTop="100dp"
             android:id="@+id/relativeLayout_num">
 
             <Button
@@ -311,7 +312,7 @@
             android:layout_height="wrap_content"
             android:visibility="visible"
             android:layout_centerInParent="true"
-            android:layout_marginTop="55dp">
+            android:layout_marginTop="100dp">
 
             <RelativeLayout
                 android:id="@+id/relativeLayout_navigation"
