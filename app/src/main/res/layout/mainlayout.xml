@@ -139,10 +139,11 @@
             android:src="@drawable/btn_blue" />
     </LinearLayout>
 
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="15dp">
+        android:orientation="horizontal"
+        android:gravity="center">
 
         <ImageButton
             android:id="@+id/btn_n_left"
@@ -151,8 +152,7 @@
             android:src="@drawable/btn_prev"
             android:background="@null"
             android:alpha="0xff"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentLeft="true"/>
+            android:layout_marginRight="120dp"/>
 
         <ImageButton
             android:id="@+id/btn_n_right"
@@ -160,9 +160,14 @@
             android:layout_height="60dp"
             android:src="@drawable/btn_next"
             android:background="@null"
-            android:alpha="0xff"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentRight="true"/>
+            android:alpha="0xff"/>
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="15dp">
 
         <RelativeLayout
             android:layout_width="wrap_content"
@@ -170,7 +175,6 @@
             android:layout_centerInParent="true"
             android:visibility="gone"
             android:paddingTop="3dp"
-            android:layout_marginTop="100dp"
             android:id="@+id/relativeLayout_num">
 
             <Button
@@ -311,8 +315,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:visibility="visible"
-            android:layout_centerInParent="true"
-            android:layout_marginTop="100dp">
+            android:layout_centerInParent="true">
 
             <RelativeLayout
                 android:id="@+id/relativeLayout_navigation"
