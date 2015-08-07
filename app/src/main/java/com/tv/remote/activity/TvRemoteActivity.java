@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -41,12 +42,16 @@ public class TvRemoteActivity extends AppCompatActivity{
 
     private int curIndex;
 
+    private Vibrator vibrator;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.mainlayout);
 
         ButterKnife.inject(this);
+
+        vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
 
         initToolbar();
 
@@ -62,15 +67,172 @@ public class TvRemoteActivity extends AppCompatActivity{
         }
     }
 
+    @OnClick(R.id.btn_ch_plus)
+    public void onClickChPlus() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_ch_minus)
+    public void onClickChMinus() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_power)
+    public void onClickPower() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_input)
+    public void onClickInput() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_vol_plus)
+    public void onClickVolPlus() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_vol_minus)
+    public void onClickVolMinus() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_red)
+    public void onClickRed() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_green)
+    public void onClickGreen() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_yellow)
+    public void onClickYellow() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_blue)
+    public void onClickBlue() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_menu)
+    public void onClickMenu() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_mute)
+    public void onClickMute() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_back)
+    public void onClickBack() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_exit)
+    public void onClickExit() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_ok)
+    public void onClickOk() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_left)
+    public void onClickLeft() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_right)
+    public void onClickRight() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_up)
+    public void onClickUp() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_down)
+    public void onClickDown() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_1)
+    public void onClickOne() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_2)
+    public void onClickTwo() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_3)
+    public void onClickThree() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_4)
+    public void onClickFour() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_5)
+    public void onClickFive() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_6)
+    public void onClickSix() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_7)
+    public void onClickSeven() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_8)
+    public void onClickEight() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_9)
+    public void onClickNight() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_n_back)
+     public void onClickNBack() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_0)
+     public void onClickZero() {
+        vibrator.vibrate(100);
+    }
+
+    @OnClick(R.id.btn_n_ok)
+    public void onClickNOk() {
+        vibrator.vibrate(100);
+    }
+
     @OnClick(R.id.btn_n_left)
     public void switchLeft() {
         Log.i("gky","switchLeft");
+        vibrator.vibrate(100);
         runAnimationSwitchLeft();
     }
 
     @OnClick(R.id.btn_n_right)
     public void switchRight() {
         Log.i("gky","switchRight");
+        vibrator.vibrate(100);
         runAnimationSwitchRight();
     }
 
