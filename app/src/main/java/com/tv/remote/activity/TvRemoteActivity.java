@@ -13,6 +13,7 @@ import android.view.View;
 import android.view.animation.AccelerateInterpolator;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import com.tv.remote.R;
 import com.tv.remote.net.NetUtils;
@@ -312,7 +313,7 @@ public class TvRemoteActivity extends AppCompatActivity{
     }
 
     private void runAnimationSwitchRight() {
-            Log.i("gky","runAnimationSwitchRight");
+            Log.i("gky", "runAnimationSwitchRight");
             if (curIndex == relativeLayout_navi.getId()) {
                 relativeLayout_navi.animate()
                         .translationX(Utils.getScreenWidth(this))
@@ -353,7 +354,7 @@ public class TvRemoteActivity extends AppCompatActivity{
             NetUtils.getInstance().init(netHandler);
         }
     }
-
+    
     @Override
     protected void onStop() {
         super.onStop();
@@ -375,7 +376,24 @@ public class TvRemoteActivity extends AppCompatActivity{
 
         @Override
         public void handleMessage(Message msg) {
-            super.handleMessage(msg);
+            switch (msg.what) {
+                case 0:
+                    Toast.makeText(mActivity.get(),"初始化完成，等待链接...",
+                            Toast.LENGTH_SHORT).show();
+                    break;
+                case 1:
+                    Toast.makeText(mActivity.get(),"连接到电视，可以使用！",
+                            Toast.LENGTH_SHORT).show();
+                    break;
+                case 2:
+                    Toast.makeText(mActivity.get(),"连接已经断开，App不可用。",
+                            Toast.LENGTH_SHORT).show();
+                    break;
+                case 3:
+                    Toast.makeText(mActivity.get(),"未连接到TV，App不可用。",
+                            Toast.LENGTH_SHORT).show();
+                    break;
+            }
         }
     }
 }

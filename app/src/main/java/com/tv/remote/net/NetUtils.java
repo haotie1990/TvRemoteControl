@@ -4,6 +4,7 @@ import android.content.Context;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 
 import com.tv.remote.app.AppContext;
@@ -26,13 +27,16 @@ public class NetUtils {
 
     private ExecutorService mPool;
 
-    private String ipClient = null;
+    private volatile String ipClient = null;
     private DatagramSocket initClientSocket = null;
     private DatagramSocket reveiveSocket = null;
     private DatagramSocket sendKeySocket = null;
     private ReceiveRunnale receiveRunnale = null;
+    private InitGetClient initGetClient = null;
 
     private Handler mHandler = null;
+
+    private boolean isInitClient = false;
 
     private NetUtils() {
         mPool = Executors.newFixedThreadPool(6);
@@ -48,16 +52,22 @@ public class NetUtils {
     public void release() {
         Log.i("gky","close all socket");
         ipClient = null;
+        isInitClient = false;
         mHandler = null;
         if (initClientSocket != null && !initClientSocket.isClosed()) {
             initClientSocket.close();
+            initClientSocket = null;
+            initGetClient = null;
         }
         if (reveiveSocket != null && !reveiveSocket.isClosed()) {
             receiveRunnale.setFlag(false);
+            receiveRunnale = null;
             reveiveSocket.close();
+            reveiveSocket = null;
         }
         if (sendKeySocket != null && !sendKeySocket.isClosed()) {
             sendKeySocket.close();
+            sendKeySocket = null;
         }
     }
 
@@ -68,20 +78,28 @@ public class NetUtils {
     public void init(Handler handler) {
         Log.i("gky", "init client send broadcast our ip and get client's ip");
         mHandler = handler;
-        InitGetClient initGetClient = new InitGetClient();
+        initGetClient = new InitGetClient();
         mPool.submit(initGetClient);
         receiveRunnale = new ReceiveRunnale();
         mPool.submit(receiveRunnale);
     }
 
     public void sendKey(int keyCode) {
-        byte[] buffer = getByteBuffer();
+        byte[] buffer = getByteBuffer(
+                NetConst.STTP_LOAD_TYPE_IR_KEY,
+                0
+        );
         for (int i = 65;i < 69; i++) {
             buffer[i] = Integer.valueOf(keyCode & 0xFF).byteValue();
             keyCode = keyCode >> 8;
         }
         buffer[73] = 0;
-        if (ipClient == null) return;
+        if (ipClient == null) {
+            if (mHandler != null) {
+                mHandler.sendEmptyMessage(3);
+            }
+            return;
+        }
         SendKeyRunnale sendKeyRunnale = new SendKeyRunnale(buffer);
         mPool.submit(sendKeyRunnale);
     }
@@ -90,7 +108,7 @@ public class NetUtils {
 
     }
 
-    public byte[] getByteBuffer() {
+    public byte[] getByteBuffer(int load_type, int sn) {
         byte[] buffer = new byte[1400];
         /*初始化版本*/
         int version = 1;
@@ -106,13 +124,11 @@ public class NetUtils {
             id = id >> 8;
         }
 
-        int load_type = NetConst.STTP_LOAD_TYPE_REQUEST_CONNECTION;
         for (int i = 9; i < 13; i++) {
             buffer[i] = Integer.valueOf(load_type & 0xFF).byteValue();
             load_type = load_type >> 8;
         }
 
-        int sn = 0;
         for (int i = 16; i < 20; i++) {
             buffer[i] = Integer.valueOf(sn & 0xFF).byteValue();
             sn = sn >> 8;
@@ -146,17 +162,26 @@ public class NetUtils {
             sn += (buffer[i] & 0xFF) << shift;
         }
         Log.i("gky","sn is "+sn);
+        if (load_type == NetConst.STTP_LOAD_TYPE_IR_KEY) {
 
-        int ip = 0;
-        for (int i = 65; i < 69; i++) {
-            int shift = (i-65) * 8;
-            ip += (buffer[i] & 0xFF) << shift;
+        }else if (load_type == NetConst.STTP_LOAD_TYPE_REQUEST_CONNECTION) {
+            Log.i("gky", "init get client's ip is " + ipClient);
+            Message msg = mHandler.obtainMessage();
+            msg.what = 1;
+            if (mHandler != null && !isInitClient) {
+                mHandler.sendMessage(msg);
+                isInitClient = true;
+            }
+            if (initClientSocket != null) {
+                initClientSocket.close();
+            }
+        }else if (load_type == NetConst.STTP_LOAD_TYPE_REQUEST_DISCONNECTION) {
+            ipClient = null;
+            isInitClient = false;
+            if (mHandler != null) {
+                mHandler.sendEmptyMessage(2);
+            }
         }
-        ipClient = ((ip) & 0xFF) + "."
-                + ((ip >> 8) & 0xFF) + "."
-                + ((ip >> 16) & 0xFF) + "."
-                + ((ip >> 24) & 0xFF);
-        Log.i("gky", "ip is " + ipClient);
     }
 
     private int getIpAddress() {
@@ -167,10 +192,6 @@ public class NetUtils {
         }
         WifiInfo info = wifiManager.getConnectionInfo();
         int ip = info.getIpAddress();
-        String ipStr = ((ip) & 0xFF) +"."
-                +((ip >> 8) & 0xFF) + "."
-                +((ip >> 16) & 0xFF) + "."
-                +((ip >> 24) & 0xFF);
         return ip;
 
     }
@@ -194,22 +215,30 @@ public class NetUtils {
                     initClientSocket.bind(new InetSocketAddress(BROADCAST_PORT));
                 }
 
-                int ipAddr = getIpAddress();
-                byte[] buffer = getByteBuffer();
-                /*将本机IP写入数据报文*/
-                for (int i = 65;i < 69; i++) {
-                    buffer[i] = Integer.valueOf(ipAddr & 0xFF).byteValue();
-                    ipAddr = ipAddr >> 8;
-                }
+                byte[] buffer = getByteBuffer(
+                        NetConst.STTP_LOAD_TYPE_REQUEST_CONNECTION,
+                        0
+                );
 
                 DatagramPacket datagramPacket = new DatagramPacket(buffer,buffer.length,
                         InetAddress.getByName(broadcastIp),BROADCAST_PORT);
-                initClientSocket.send(datagramPacket);
-                Log.i("gky","send broadcast our ip ");
+                boolean flag = false;
+                while (ipClient == null) {/*循环发送广播,直到与TV建立连接或App退出*/
+                    initClientSocket.send(datagramPacket);
+                    Thread.sleep(500);
+                    Log.i("gky","send broadcast our ip ");
+                    if (mHandler != null && !flag) {
+                        mHandler.sendEmptyMessage(0);
+                        flag = true;
+                    }
+                }
+                Log.i("gky","########ipClient is not null########");
             } catch (IOException e) {
                 Log.e("gky",getClass()+":"+e.toString());
                 e.printStackTrace();
-            }finally {
+            }catch (InterruptedException e) {
+                e.printStackTrace();
+            } finally {
                 Log.w("gky","close InitGetClient socket");
                 initClientSocket.close();
             }
@@ -243,7 +272,7 @@ public class NetUtils {
                     reveiveSocket.receive(datagramPacket);
                     ipClient = datagramPacket.getAddress().getHostAddress();
                     Log.i("gky", "reveive data from " + ipClient);
-                    //parseRecieveBuffer(reviveBuffer);
+                    parseRecieveBuffer(reviveBuffer);
                 }
             } catch (SocketException e) {
                 Log.e("gky",getClass()+":"+e.toString());
@@ -281,7 +310,6 @@ public class NetUtils {
                 }
                 sendKeySocket.send(datagramPacket);
                 Log.i("gky", "send broadcast key success!");
-
             } catch (SocketException e) {
                 Log.e("gky",getClass()+":"+e.toString());
                 e.printStackTrace();
