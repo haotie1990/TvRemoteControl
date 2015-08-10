@@ -350,7 +350,7 @@ public class TvRemoteActivity extends AppCompatActivity{
     protected void onResume() {
         super.onResume();
         if (!NetUtils.getInstance().isConnectToClient()) {
-            NetUtils.getInstance().getClient(netHandler);
+            NetUtils.getInstance().init(netHandler);
         }
     }
 
@@ -362,7 +362,7 @@ public class TvRemoteActivity extends AppCompatActivity{
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        NetUtils.getInstance().closeAllSocket();
+        NetUtils.getInstance().release();
     }
 
     public static class NetHandler extends Handler {

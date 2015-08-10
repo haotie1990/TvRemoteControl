@@ -4,7 +4,6 @@ import android.content.Context;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Handler;
-import android.provider.Settings;
 import android.util.Log;
 
 import com.tv.remote.app.AppContext;
@@ -33,6 +32,8 @@ public class NetUtils {
     private DatagramSocket sendKeySocket = null;
     private ReceiveRunnale receiveRunnale = null;
 
+    private Handler mHandler = null;
+
     private NetUtils() {
         mPool = Executors.newFixedThreadPool(6);
     }
@@ -44,9 +45,10 @@ public class NetUtils {
         return instance;
     }
 
-    public void closeAllSocket() {
+    public void release() {
         Log.i("gky","close all socket");
         ipClient = null;
+        mHandler = null;
         if (initClientSocket != null && !initClientSocket.isClosed()) {
             initClientSocket.close();
         }
@@ -63,8 +65,9 @@ public class NetUtils {
         return ipClient != null ? true :false;
     }
 
-    public void getClient(Handler handler) {
+    public void init(Handler handler) {
         Log.i("gky", "init client send broadcast our ip and get client's ip");
+        mHandler = handler;
         InitGetClient initGetClient = new InitGetClient();
         mPool.submit(initGetClient);
         receiveRunnale = new ReceiveRunnale();
