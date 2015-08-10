@@ -10,5 +10,6 @@ public class TvRemoteApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        AppContext.setContext(getApplicationContext());
     }
 }
