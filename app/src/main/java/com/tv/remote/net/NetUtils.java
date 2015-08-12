@@ -9,6 +9,7 @@ import android.util.Log;
 
 import com.tv.remote.app.AppContext;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -29,8 +30,8 @@ public class NetUtils {
 
     private volatile String ipClient = null;
     private DatagramSocket initClientSocket = null;
-    private DatagramSocket reveiveSocket = null;
-    private DatagramSocket sendKeySocket = null;
+    private DatagramSocket receiveSocket = null;
+    private DatagramSocket sendSocket = null;
     private ReceiveRunnale receiveRunnale = null;
     private InitGetClient initGetClient = null;
 
@@ -59,15 +60,15 @@ public class NetUtils {
             initClientSocket = null;
             initGetClient = null;
         }
-        if (reveiveSocket != null && !reveiveSocket.isClosed()) {
+        if (receiveSocket != null && !receiveSocket.isClosed()) {
             receiveRunnale.setFlag(false);
             receiveRunnale = null;
-            reveiveSocket.close();
-            reveiveSocket = null;
+            receiveSocket.close();
+            receiveSocket = null;
         }
-        if (sendKeySocket != null && !sendKeySocket.isClosed()) {
-            sendKeySocket.close();
-            sendKeySocket = null;
+        if (sendSocket != null && !sendSocket.isClosed()) {
+            sendSocket.close();
+            sendSocket = null;
         }
     }
 
@@ -76,7 +77,7 @@ public class NetUtils {
     }
 
     public void init(Handler handler) {
-        Log.i("gky", "init client send broadcast our ip and get client's ip");
+        Log.i("gky", "init client send broadcast our ip and get tv's ip");
         mHandler = handler;
         initGetClient = new InitGetClient();
         mPool.submit(initGetClient);
@@ -100,12 +101,25 @@ public class NetUtils {
             }
             return;
         }
-        SendKeyRunnale sendKeyRunnale = new SendKeyRunnale(buffer);
-        mPool.submit(sendKeyRunnale);
+        SendRunnale sendRunnale = new SendRunnale(buffer);
+        mPool.submit(sendRunnale);
     }
 
     public void sendMsg(String msg) {
-
+        byte[] buffer = getByteBuffer(
+                NetConst.STTP_LOAD_TYPE_CMD_INPUT_TEXT,
+                0
+        );
+        ByteArrayInputStream bip = new ByteArrayInputStream(msg.getBytes());
+        bip.read(buffer, 65, 1335);
+        if (ipClient == null) {
+            if (mHandler != null) {
+                mHandler.sendEmptyMessage(3);
+            }
+            return;
+        }
+        SendRunnale sendRunnale = new SendRunnale(buffer);
+        mPool.submit(sendRunnale);
     }
 
     public byte[] getByteBuffer(int load_type, int sn) {
@@ -137,7 +151,7 @@ public class NetUtils {
         return buffer;
     }
 
-    private void parseRecieveBuffer(byte[] buffer) {
+    private boolean parseRecieveBuffer(byte[] buffer) {
         int version = 0;
         for (int i = 0; i < 2; i++) {
             int shift = i * 8;
@@ -163,7 +177,7 @@ public class NetUtils {
         }
         Log.i("gky","sn is "+sn);
         if (load_type == NetConst.STTP_LOAD_TYPE_IR_KEY) {
-
+            return false;
         }else if (load_type == NetConst.STTP_LOAD_TYPE_REQUEST_CONNECTION) {
             Log.i("gky", "init get client's ip is " + ipClient);
             Message msg = mHandler.obtainMessage();
@@ -175,12 +189,16 @@ public class NetUtils {
             if (initClientSocket != null) {
                 initClientSocket.close();
             }
+            return true;
         }else if (load_type == NetConst.STTP_LOAD_TYPE_REQUEST_DISCONNECTION) {
             ipClient = null;
             isInitClient = false;
             if (mHandler != null) {
                 mHandler.sendEmptyMessage(2);
             }
+            return true;
+        }else {
+            return false;
         }
     }
 
@@ -231,6 +249,7 @@ public class NetUtils {
                         mHandler.sendEmptyMessage(0);
                         flag = true;
                     }
+
                 }
                 Log.i("gky","########ipClient is not null########");
             } catch (IOException e) {
@@ -262,17 +281,18 @@ public class NetUtils {
             byte[] reviveBuffer = new byte[1400];
             DatagramPacket datagramPacket = new DatagramPacket(reviveBuffer, reviveBuffer.length);
             try {
-                if (reveiveSocket == null || reveiveSocket.isClosed()) {
-                    reveiveSocket = new DatagramSocket(null);
-                    reveiveSocket.setReuseAddress(true);
-                    reveiveSocket.bind(new InetSocketAddress(BROADCAST_PORT));
+                if (receiveSocket == null || receiveSocket.isClosed()) {
+                    receiveSocket = new DatagramSocket(null);
+                    receiveSocket.setReuseAddress(true);
+                    receiveSocket.bind(new InetSocketAddress(BROADCAST_PORT));
                 }
                 while (isFlag) {
                     Log.i("gky", "enter loop and wait receive data");
-                    reveiveSocket.receive(datagramPacket);
-                    ipClient = datagramPacket.getAddress().getHostAddress();
-                    Log.i("gky", "reveive data from " + ipClient);
-                    parseRecieveBuffer(reviveBuffer);
+                    receiveSocket.receive(datagramPacket);
+                    if (parseRecieveBuffer(reviveBuffer)) {
+                        ipClient = datagramPacket.getAddress().getHostAddress();
+                        Log.i("gky", "reveive data from " + ipClient);
+                    }
                 }
             } catch (SocketException e) {
                 Log.e("gky",getClass()+":"+e.toString());
@@ -281,20 +301,20 @@ public class NetUtils {
                 Log.e("gky",getClass()+":"+e.toString());
                 e.printStackTrace();
             }finally {
-                if (!reveiveSocket.isClosed()) {
+                if (!receiveSocket.isClosed()) {
                     Log.w("gky", "close ReceiveRunnale socket");
-                    reveiveSocket.close();
+                    receiveSocket.close();
                 }
             }
         }
     }
 
-    public class SendKeyRunnale implements Runnable {
+    public class SendRunnale implements Runnable {
 
         byte[] bf = null;
         private static final int BROADCAST_PORT = 5555;
 
-        public SendKeyRunnale(byte[] buffer) {
+        public SendRunnale(byte[] buffer) {
             bf = buffer;
         }
 
@@ -303,12 +323,12 @@ public class NetUtils {
             try {
                 DatagramPacket datagramPacket = new DatagramPacket(bf,bf.length,
                     InetAddress.getByName(ipClient),BROADCAST_PORT);
-                if (sendKeySocket == null || sendKeySocket.isClosed()) {
-                    sendKeySocket = new DatagramSocket(null);
-                    sendKeySocket.setReuseAddress(true);
-                    sendKeySocket.bind(new InetSocketAddress(BROADCAST_PORT));
+                if (sendSocket == null || sendSocket.isClosed()) {
+                    sendSocket = new DatagramSocket(null);
+                    sendSocket.setReuseAddress(true);
+                    sendSocket.bind(new InetSocketAddress(BROADCAST_PORT));
                 }
-                sendKeySocket.send(datagramPacket);
+                sendSocket.send(datagramPacket);
                 Log.i("gky", "send broadcast key success!");
             } catch (SocketException e) {
                 Log.e("gky",getClass()+":"+e.toString());
@@ -318,7 +338,7 @@ public class NetUtils {
                 e.printStackTrace();
             } finally {
                 Log.w("gky","close SendKeyRunnale socket");
-                sendKeySocket.close();
+                sendSocket.close();
             }
         }
     }

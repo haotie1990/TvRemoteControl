@@ -26,3 +26,5 @@ local.properties
 
 # Mac os
 .DS_Store/captures
+
+app/.gitignore
