@@ -6,19 +6,24 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Vibrator;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
+import android.widget.AdapterView;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.tv.remote.R;
 import com.tv.remote.net.NetUtils;
+import com.tv.remote.utils.DrawerLayoutInstaller;
 import com.tv.remote.utils.KeyEvent;
 import com.tv.remote.utils.Utils;
+import com.tv.remote.view.GlobalMenu;
 
 import java.lang.ref.WeakReference;
 
@@ -29,7 +34,8 @@ import butterknife.OnClick;
 /**
  * Created by 凯阳 on 2015/8/6.
  */
-public class TvRemoteActivity extends AppCompatActivity{
+public class TvRemoteActivity extends AppCompatActivity
+            implements GlobalMenu.OnHeaderClickListener, AdapterView.OnItemClickListener{
 
     @InjectView(R.id.toolbar)
     Toolbar toolbar;
@@ -52,6 +58,8 @@ public class TvRemoteActivity extends AppCompatActivity{
 
     private NetHandler netHandler;
 
+    private DrawerLayout drawerLayout;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,6 +72,7 @@ public class TvRemoteActivity extends AppCompatActivity{
         netHandler = new NetHandler(this);
 
         initToolbar();
+        initDrawer();
 
         curIndex = relativeLayout_navi.getId();
     }
@@ -75,6 +84,19 @@ public class TvRemoteActivity extends AppCompatActivity{
             getSupportActionBar().setSubtitle(null);
             toolbar.setNavigationIcon(R.drawable.btn_option);
         }
+    }
+
+    private void initDrawer() {
+        GlobalMenu menuView = new GlobalMenu(this);
+        menuView.setOnHeaderClickListener(this);
+        menuView.setOnItemClickListener(this);
+
+        drawerLayout = DrawerLayoutInstaller.from(this)
+                .drawerRoot(R.layout.drawer_root)
+                .drawerLeftView(menuView)
+                .drawerLeftWidth(Utils.dpToPx(300))
+                .withNavigationIconToggler(toolbar)
+                .build();
     }
 
     @OnClick(R.id.btn_ch_plus)
@@ -354,7 +376,7 @@ public class TvRemoteActivity extends AppCompatActivity{
             NetUtils.getInstance().init(netHandler);
         }
     }
-    
+
     @Override
     protected void onStop() {
         super.onStop();
@@ -364,6 +386,17 @@ public class TvRemoteActivity extends AppCompatActivity{
     protected void onDestroy() {
         super.onDestroy();
         NetUtils.getInstance().release();
+    }
+
+    @Override
+    public void onGlobalMenuHeaderClick(final View v) {
+        Log.i("gky","onGlobalMenuHeaderClick");
+        drawerLayout.closeDrawer(Gravity.LEFT);
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        Log.i("gky","onItemClick position:"+position);
     }
 
     public static class NetHandler extends Handler {

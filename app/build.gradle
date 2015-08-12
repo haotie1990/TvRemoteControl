@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.tv.remote.tvremotecontrol"
-        minSdkVersion 15
+        minSdkVersion 19
         targetSdkVersion 22
         versionCode 1
         versionName "1.0"
@@ -25,4 +25,5 @@ dependencies {
     compile 'com.android.support:support-v4:22.2.0'
     compile 'com.android.support:support-v13:22.2.0'
     compile 'com.jakewharton:butterknife:5.1.1'
+    compile files('libs/picasso-2.5.2.jar')
 }
