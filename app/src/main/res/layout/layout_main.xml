@@ -74,12 +74,14 @@
             android:gravity="center"
             android:orientation="vertical">
 
-            <ImageButton
-                android:id="@+id/btn_power"
+            <Button
+                android:id="@+id/btn_home"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/btn_bg"
-                android:src="@drawable/btn_power" />
+                android:text="HOME"
+                android:textColor="#ff336977"
+                android:textSize="12sp"/>
 
             <Button
                 android:id="@+id/btn_input"

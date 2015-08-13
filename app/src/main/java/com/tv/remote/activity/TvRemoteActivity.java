@@ -62,10 +62,10 @@ public class TvRemoteActivity extends BaseActivity{
         NetUtils.getInstance().sendKey(KeyEvent.KEYCODE_CHANNEL_DOWN);
     }
 
-    @OnClick(R.id.btn_power)
-    public void onClickPower() {
+    @OnClick(R.id.btn_home)
+    public void onClickHome() {
         vibrator.vibrate(100);
-        NetUtils.getInstance().sendKey(KeyEvent.KEYCODE_POWER);
+        NetUtils.getInstance().sendKey(KeyEvent.KEYCODE_HOME);
     }
 
     @OnClick(R.id.btn_input)
