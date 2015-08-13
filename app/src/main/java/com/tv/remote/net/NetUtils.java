@@ -110,6 +110,7 @@ public class NetUtils {
                 NetConst.STTP_LOAD_TYPE_CMD_INPUT_TEXT,
                 0
         );
+        Log.i("gky","sendMsg size: "+msg.getBytes().length);
         ByteArrayInputStream bip = new ByteArrayInputStream(msg.getBytes());
         bip.read(buffer, 65, 1335);
         if (ipClient == null) {

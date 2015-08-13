@@ -9,7 +9,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.view.View;
-import android.view.ViewTreeObserver;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.AnimationUtils;
 import android.widget.EditText;
@@ -128,7 +127,7 @@ public class TvCommentsActivity extends BaseActivity
         if (vallidateComment()) {
             commentsAdapter.addItem(etComment.getText().toString());
             //rvComments.smoothScrollBy(0, rvComments.getChildAt(0).getHeight() * commentsAdapter.getItemCount());
-            //NetUtils.getInstance().sendMsg(etComment.getText().toString());
+            NetUtils.getInstance().sendMsg(etComment.getText().toString());
             etComment.setText(null);
             btnSendComment.setCurrentState(SendCommentButton.STATE_DONE);
         }
