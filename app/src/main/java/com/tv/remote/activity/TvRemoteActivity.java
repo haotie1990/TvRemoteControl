@@ -44,6 +44,7 @@ public class TvRemoteActivity extends BaseActivity{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.layout_main);
+        setTitle(this.getClass().getSimpleName());
         vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
         curIndex = relativeLayout_navi.getId();
 

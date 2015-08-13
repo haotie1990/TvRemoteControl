@@ -111,9 +111,10 @@ public abstract class BaseActivity extends AppCompatActivity
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        Log.i("gky",getClass().getSimpleName()+"::onItemClick position:"+position);
-        if (position == 1) {/*TvRemoteActivity*/
-            drawerLayout.closeDrawer(Gravity.LEFT);
+        Log.i("gky",getClass().getSimpleName()+"::onItemClick position:"+position+" curActivity:"+getActivityBySuper().getTitle());
+        drawerLayout.closeDrawer(Gravity.LEFT);
+        if (position == 1
+                && !getActivityBySuper().getTitle().equals(TvRemoteActivity.class.getSimpleName())) {/*TvRemoteActivity*/
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
@@ -123,8 +124,8 @@ public abstract class BaseActivity extends AppCompatActivity
                     getActivityBySuper().finish();
                 }
             },200);
-        }else if (position == 2) {/*TvCommentsActivity*/
-            drawerLayout.closeDrawer(Gravity.LEFT);
+        }else if (position == 2
+                && !getActivityBySuper().getTitle().equals(TvCommentsActivity.class.getSimpleName())) {/*TvCommentsActivity*/
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {

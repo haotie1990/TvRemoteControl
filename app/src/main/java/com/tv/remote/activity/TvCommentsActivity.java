@@ -46,7 +46,7 @@ public class TvCommentsActivity extends BaseActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_comments);
-
+        setTitle(this.getClass().getSimpleName());
         initComments();
         initSendCommentButton();
 
