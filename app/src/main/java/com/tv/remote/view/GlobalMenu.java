@@ -9,6 +9,7 @@ import android.widget.ListView;
 
 import com.squareup.picasso.Picasso;
 import com.tv.remote.R;
+import com.tv.remote.utils.CircleTransformation;
 
 /**
  * Created by 凯阳 on 2015/7/8.

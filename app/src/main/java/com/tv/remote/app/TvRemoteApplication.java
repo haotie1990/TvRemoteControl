@@ -12,4 +12,9 @@ public class TvRemoteApplication extends Application {
         super.onCreate();
         AppContext.setContext(getApplicationContext());
     }
+
+    @Override
+    public void onTrimMemory(int level) {
+        super.onTrimMemory(level);
+    }
 }

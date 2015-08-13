@@ -1,4 +1,4 @@
-package com.tv.remote.view;
+package com.tv.remote.utils;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapShader;

@@ -2,43 +2,27 @@ package com.tv.remote.activity;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.app.Activity;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.os.Vibrator;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
-import android.widget.AdapterView;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
-import android.widget.Toast;
 
 import com.tv.remote.R;
 import com.tv.remote.net.NetUtils;
-import com.tv.remote.utils.DrawerLayoutInstaller;
 import com.tv.remote.utils.KeyEvent;
 import com.tv.remote.utils.Utils;
-import com.tv.remote.view.GlobalMenu;
 
-import java.lang.ref.WeakReference;
-
-import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 
 /**
  * Created by 凯阳 on 2015/8/6.
  */
-public class TvRemoteActivity extends AppCompatActivity
-            implements GlobalMenu.OnHeaderClickListener, AdapterView.OnItemClickListener{
-
-    @InjectView(R.id.toolbar)
-    Toolbar toolbar;
+public class TvRemoteActivity extends BaseActivity{
 
     @InjectView(R.id.relativeLayout_navi)
     RelativeLayout relativeLayout_navi;
@@ -56,47 +40,14 @@ public class TvRemoteActivity extends AppCompatActivity
 
     private Vibrator vibrator;
 
-    private NetHandler netHandler;
-
-    private DrawerLayout drawerLayout;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.mainlayout);
-
-        ButterKnife.inject(this);
-
+        setContentView(R.layout.layout_main);
         vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-
-        netHandler = new NetHandler(this);
-
-        initToolbar();
-        initDrawer();
-
         curIndex = relativeLayout_navi.getId();
-    }
 
-    private void initToolbar() {
-        if (toolbar != null) {
-            setSupportActionBar(toolbar);
-            getSupportActionBar().setTitle(null);
-            getSupportActionBar().setSubtitle(null);
-            toolbar.setNavigationIcon(R.drawable.btn_option);
-        }
-    }
-
-    private void initDrawer() {
-        GlobalMenu menuView = new GlobalMenu(this);
-        menuView.setOnHeaderClickListener(this);
-        menuView.setOnItemClickListener(this);
-
-        drawerLayout = DrawerLayoutInstaller.from(this)
-                .drawerRoot(R.layout.drawer_root)
-                .drawerLeftView(menuView)
-                .drawerLeftWidth(Utils.dpToPx(300))
-                .withNavigationIconToggler(toolbar)
-                .build();
+        add(this);
     }
 
     @OnClick(R.id.btn_ch_plus)
@@ -300,7 +251,7 @@ public class TvRemoteActivity extends AppCompatActivity
     }
 
     private void runAnimationSwitchLeft() {
-        Log.i("gky","runAnimationSwitch");
+        Log.i("gky", "runAnimationSwitch");
         if (curIndex == relativeLayout_navi.getId()) {
             relativeLayout_navi.animate()
                     .translationX(-Utils.getScreenWidth(this))
@@ -372,9 +323,6 @@ public class TvRemoteActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
-        if (!NetUtils.getInstance().isConnectToClient()) {
-            NetUtils.getInstance().init(netHandler);
-        }
     }
 
     @Override
@@ -385,48 +333,11 @@ public class TvRemoteActivity extends AppCompatActivity
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        NetUtils.getInstance().release();
+        remove(this);
     }
 
     @Override
-    public void onGlobalMenuHeaderClick(final View v) {
-        Log.i("gky","onGlobalMenuHeaderClick");
-        drawerLayout.closeDrawer(Gravity.LEFT);
-    }
-
-    @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        Log.i("gky","onItemClick position:"+position);
-    }
-
-    public static class NetHandler extends Handler {
-
-        private WeakReference<TvRemoteActivity> mActivity;
-
-        public NetHandler(TvRemoteActivity activity) {
-            mActivity = new WeakReference<TvRemoteActivity>(activity);
-        }
-
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case 0:
-                    Toast.makeText(mActivity.get(),"初始化完成，等待链接...",
-                            Toast.LENGTH_SHORT).show();
-                    break;
-                case 1:
-                    Toast.makeText(mActivity.get(),"连接到电视，可以使用！",
-                            Toast.LENGTH_SHORT).show();
-                    break;
-                case 2:
-                    Toast.makeText(mActivity.get(),"连接已经断开，App不可用。",
-                            Toast.LENGTH_SHORT).show();
-                    break;
-                case 3:
-                    Toast.makeText(mActivity.get(),"未连接到TV，App不可用。",
-                            Toast.LENGTH_SHORT).show();
-                    break;
-            }
-        }
+    public Activity getActivityBySuper() {
+        return this;
     }
 }

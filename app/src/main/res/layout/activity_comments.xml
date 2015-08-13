@@ -1,0 +1,43 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/contentRoot"
+    android:orientation="vertical">
+
+    <include
+        android:id="@+id/toolbar"
+        layout="@layout/view_toolbar" />
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/rvComments"
+        android:layout_width="match_parent"
+        android:layout_height="500dp"
+        android:scrollbars="none"/>
+
+    <LinearLayout
+        android:id="@+id/llAddComment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="8dp"
+        android:background="@color/bg_comments">
+
+        <EditText
+            android:id="@+id/etComment"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="#555555"
+            android:textSize="14sp"
+            android:hint="请输入不超过一百四十字的内容..."/>
+
+        <com.tv.remote.view.SendCommentButton
+            android:id="@+id/btnSendComment"
+            android:layout_width="80dp"
+            android:layout_height="50dp"
+            android:layout_marginLeft="5dp"
+            android:background="@drawable/btn_send_comment"
+            android:orientation="vertical"/>
+    </LinearLayout>
+
+</LinearLayout>
