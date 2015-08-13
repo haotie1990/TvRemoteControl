@@ -106,13 +106,28 @@ public class NetUtils {
     }
 
     public void sendMsg(String msg) {
+        int length = msg.getBytes().length;
+        if (length > 1330 ) {
+            if (mHandler != null) {
+                mHandler.sendEmptyMessage(4);
+            }
+            return;
+        }
         byte[] buffer = getByteBuffer(
                 NetConst.STTP_LOAD_TYPE_CMD_INPUT_TEXT,
-                0
+                length
         );
-        Log.i("gky","sendMsg size: "+msg.getBytes().length);
-        ByteArrayInputStream bip = new ByteArrayInputStream(msg.getBytes());
-        bip.read(buffer, 65, 1335);
+        try {
+            ByteArrayInputStream bip = new ByteArrayInputStream(msg.getBytes());
+            bip.read(buffer, 65, length);
+            bip.close();
+        }catch (IOException e) {
+            e.printStackTrace();
+            if (mHandler != null) {
+                mHandler.sendEmptyMessage(4);
+            }
+            return;
+        }
         if (ipClient == null) {
             if (mHandler != null) {
                 mHandler.sendEmptyMessage(3);
@@ -133,7 +148,7 @@ public class NetUtils {
         }
 
         /*初始化设备ID*/
-        int id = 55;
+        int id = 55;/*TV:56,Phone:55*/
         for (int i = 2; i < 6; i++) {
             buffer[i] = Integer.valueOf(id & 0xFF).byteValue();
             id = id >> 8;
@@ -179,7 +194,7 @@ public class NetUtils {
         Log.i("gky","sn is "+sn);
         if (load_type == NetConst.STTP_LOAD_TYPE_IR_KEY) {
             return false;
-        }else if (load_type == NetConst.STTP_LOAD_TYPE_REQUEST_CONNECTION) {
+        }else if (load_type == NetConst.STTP_LOAD_TYPE_REQUEST_CONNECTION && id == 56) {
             Log.i("gky", "init get client's ip is " + ipClient);
             Message msg = mHandler.obtainMessage();
             msg.what = 1;
@@ -290,9 +305,9 @@ public class NetUtils {
                 while (isFlag) {
                     Log.i("gky", "enter loop and wait receive data");
                     receiveSocket.receive(datagramPacket);
-                    if (parseRecieveBuffer(reviveBuffer)) {
+                    if (ipClient == null && parseRecieveBuffer(reviveBuffer)) {
                         ipClient = datagramPacket.getAddress().getHostAddress();
-                        Log.i("gky", "reveive data from " + ipClient);
+                        Log.i("gky", "receive data from " + ipClient +" and get it");
                     }
                 }
             } catch (SocketException e) {

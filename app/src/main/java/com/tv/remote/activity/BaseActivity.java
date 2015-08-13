@@ -166,6 +166,10 @@ public abstract class BaseActivity extends AppCompatActivity
                     Toast.makeText(mActivity.get(),"未连接到TV，App不可用。",
                             Toast.LENGTH_SHORT).show();
                     break;
+                case 4:
+                    Toast.makeText(mActivity.get(),"输入无效，请重新输入！",
+                            Toast.LENGTH_SHORT).show();
+                    break;
             }
         }
     }
