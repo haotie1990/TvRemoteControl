@@ -29,6 +29,8 @@ public class NetUtils {
     private ExecutorService mPool;
 
     private volatile String ipClient = null;
+    private volatile boolean isLongKeyFlag = true;
+
     private DatagramSocket initClientSocket = null;
     private DatagramSocket receiveSocket = null;
     private DatagramSocket sendSocket = null;
@@ -40,7 +42,7 @@ public class NetUtils {
     private boolean isInitClient = false;
 
     private NetUtils() {
-        mPool = Executors.newFixedThreadPool(6);
+        mPool = Executors.newFixedThreadPool(10);
     }
 
     public static NetUtils getInstance() {
@@ -76,6 +78,10 @@ public class NetUtils {
         return ipClient != null ? true :false;
     }
 
+    public boolean isLongKeyFlag() {
+        return isLongKeyFlag;
+    }
+
     public void init(Handler handler) {
         Log.i("gky", "init client send broadcast our ip and get tv's ip");
         mHandler = handler;
@@ -95,6 +101,27 @@ public class NetUtils {
             keyCode = keyCode >> 8;
         }
         buffer[73] = 0;
+        if (ipClient == null) {
+            if (mHandler != null) {
+                mHandler.sendEmptyMessage(3);
+            }
+            return;
+        }
+        SendRunnale sendRunnale = new SendRunnale(buffer);
+        mPool.submit(sendRunnale);
+    }
+
+    public void sendLongKey(int keyCode, boolean isLongKeyFlag) {
+        this.isLongKeyFlag = isLongKeyFlag;
+        byte[] buffer = getByteBuffer(
+                NetConst.STTP_LOAD_TYPE_IR_KEY,
+                0
+        );
+        for (int i = 65; i < 69; i++) {
+            buffer[i] = Integer.valueOf(keyCode & 0xFF).byteValue();
+            keyCode = keyCode >> 8;
+        }
+        buffer[73] = (byte) (isLongKeyFlag ? 1:2);
         if (ipClient == null) {
             if (mHandler != null) {
                 mHandler.sendEmptyMessage(3);
