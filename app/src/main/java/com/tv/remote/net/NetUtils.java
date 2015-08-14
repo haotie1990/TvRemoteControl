@@ -259,7 +259,7 @@ public class NetUtils {
                 boolean flag = false;
                 while (ipClient == null) {/*循环发送广播,直到与TV建立连接或App退出*/
                     initClientSocket.send(datagramPacket);
-                    Thread.sleep(500);
+                    Thread.sleep(1000);
                     Log.i("gky","send broadcast our ip ");
                     if (mHandler != null && !flag) {
                         mHandler.sendEmptyMessage(0);
@@ -303,7 +303,7 @@ public class NetUtils {
                     receiveSocket.bind(new InetSocketAddress(BROADCAST_PORT));
                 }
                 while (isFlag) {
-                    Log.i("gky", "enter loop and wait receive data");
+                    Log.i("gky", "---------->enter loop and wait receive data");
                     receiveSocket.receive(datagramPacket);
                     if (ipClient == null && parseRecieveBuffer(reviveBuffer)) {
                         ipClient = datagramPacket.getAddress().getHostAddress();
