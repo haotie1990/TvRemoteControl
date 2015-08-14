@@ -9,6 +9,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Toast;
@@ -57,6 +58,17 @@ public abstract class BaseActivity extends AppCompatActivity
     @Override
     protected void onDestroy() {
         super.onDestroy();
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (event.getKeyCode() == KeyEvent.KEYCODE_VOLUME_UP
+                || event.getKeyCode() == KeyEvent.KEYCODE_VOLUME_DOWN) {
+            Log.i("gky","intercetp volume key return true");
+            NetUtils.getInstance().sendKey(keyCode);
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
     }
 
     protected void add(Activity activity) {
