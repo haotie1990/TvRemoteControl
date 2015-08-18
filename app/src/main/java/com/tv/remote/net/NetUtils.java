@@ -222,7 +222,7 @@ public class NetUtils extends Handler{
         return buffer;
     }
 
-    private boolean parseRecieveBuffer(byte[] buffer) {
+    private boolean parseReceiveBuffer(byte[] buffer) {
         int version = 0;
         for (int i = 0; i < 2; i++) {
             int shift = i * 8;
@@ -386,7 +386,7 @@ public class NetUtils extends Handler{
                 while (isFlag) {
                     Log.i("gky", "---------->enter loop and wait receive data");
                     receiveSocket.receive(datagramPacket);
-                    if (parseRecieveBuffer(reviveBuffer) && ipClient == null) {
+                    if (parseReceiveBuffer(reviveBuffer) && ipClient == null) {
                         ipClient = datagramPacket.getAddress().getHostAddress();
                         Log.i("gky", "receive data from " + ipClient +" and get it");
                     }

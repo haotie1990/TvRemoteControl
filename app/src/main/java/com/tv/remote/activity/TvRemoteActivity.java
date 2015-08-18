@@ -16,6 +16,7 @@ import com.tv.remote.R;
 import com.tv.remote.net.NetUtils;
 import com.tv.remote.utils.KeyEvent;
 import com.tv.remote.utils.Utils;
+import com.tv.remote.view.TouchPadView;
 
 import butterknife.InjectView;
 import butterknife.OnClick;
@@ -32,6 +33,9 @@ public class TvRemoteActivity extends BaseActivity{
 
     @InjectView(R.id.relativeLayout_num)
     RelativeLayout relativeLayout_num;
+
+    @InjectView(R.id.touchPadview)
+    TouchPadView touchPadview;
 
     @InjectView(R.id.btn_n_left)
     ImageButton btn_n_left;
@@ -331,6 +335,7 @@ public class TvRemoteActivity extends BaseActivity{
                         @Override
                         public void onAnimationEnd(Animator animation) {
                             relativeLayout_navi.setVisibility(View.GONE);
+                            touchPadview.setVisibility(View.GONE);
                             relativeLayout_num.setTranslationX(0);
                             relativeLayout_num.setVisibility(View.VISIBLE);
                             curIndex = relativeLayout_num.getId();
@@ -346,6 +351,23 @@ public class TvRemoteActivity extends BaseActivity{
                         @Override
                         public void onAnimationEnd(Animator animation) {
                             relativeLayout_num.setVisibility(View.GONE);
+                            relativeLayout_navi.setVisibility(View.GONE);
+                            touchPadview.setTranslationX(0);
+                            touchPadview.setVisibility(View.VISIBLE);
+                            curIndex = touchPadview.getId();
+                        }
+                    })
+                    .start();
+        }else if (curIndex == touchPadview.getId()) {
+            touchPadview.animate()
+                    .translationX(-Utils.getScreenWidth(this))
+                    .setDuration(300)
+                    .setInterpolator(new AccelerateInterpolator())
+                    .setListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            relativeLayout_num.setVisibility(View.GONE);
+                            touchPadview.setVisibility(View.GONE);
                             relativeLayout_navi.setTranslationX(0);
                             relativeLayout_navi.setVisibility(View.VISIBLE);
                             curIndex = relativeLayout_navi.getId();
@@ -366,6 +388,7 @@ public class TvRemoteActivity extends BaseActivity{
                             @Override
                             public void onAnimationEnd(Animator animation) {
                                 relativeLayout_navi.setVisibility(View.GONE);
+                                touchPadview.setVisibility(View.GONE);
                                 relativeLayout_num.setTranslationX(0);
                                 relativeLayout_num.setVisibility(View.VISIBLE);
                                 curIndex = relativeLayout_num.getId();
@@ -381,6 +404,23 @@ public class TvRemoteActivity extends BaseActivity{
                             @Override
                             public void onAnimationEnd(Animator animation) {
                                 relativeLayout_num.setVisibility(View.GONE);
+                                relativeLayout_navi.setVisibility(View.GONE);
+                                touchPadview.setTranslationX(0);
+                                touchPadview.setVisibility(View.VISIBLE);
+                                curIndex = touchPadview.getId();
+                            }
+                        })
+                        .start();
+            }else if (curIndex == touchPadview.getId()) {
+                touchPadview.animate()
+                        .translationX(Utils.getScreenWidth(this))
+                        .setDuration(300)
+                        .setInterpolator(new AccelerateInterpolator())
+                        .setListener(new AnimatorListenerAdapter() {
+                            @Override
+                            public void onAnimationEnd(Animator animation) {
+                                relativeLayout_num.setVisibility(View.GONE);
+                                touchPadview.setVisibility(View.GONE);
                                 relativeLayout_navi.setTranslationX(0);
                                 relativeLayout_navi.setVisibility(View.VISIBLE);
                                 curIndex = relativeLayout_navi.getId();
