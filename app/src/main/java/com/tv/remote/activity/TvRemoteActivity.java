@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
 import android.widget.ImageButton;
@@ -15,9 +16,12 @@ import com.tv.remote.R;
 import com.tv.remote.net.NetUtils;
 import com.tv.remote.utils.KeyEvent;
 import com.tv.remote.utils.Utils;
+import com.tv.remote.view.TouchPadView;
 
 import butterknife.InjectView;
 import butterknife.OnClick;
+import butterknife.OnLongClick;
+import butterknife.OnTouch;
 
 /**
  * Created by 凯阳 on 2015/8/6.
@@ -29,6 +33,9 @@ public class TvRemoteActivity extends BaseActivity{
 
     @InjectView(R.id.relativeLayout_num)
     RelativeLayout relativeLayout_num;
+
+    @InjectView(R.id.touchPadview)
+    TouchPadView touchPadview;
 
     @InjectView(R.id.btn_n_left)
     ImageButton btn_n_left;
@@ -77,8 +84,74 @@ public class TvRemoteActivity extends BaseActivity{
 
     @OnClick(R.id.btn_vol_plus)
     public void onClickVolPlus() {
+        Log.i("gky","onClickVolPlus");
         vibrator.vibrate(100);
         NetUtils.getInstance().sendKey(KeyEvent.KEYCODE_VOLUME_UP);
+    }
+
+    @OnLongClick({R.id.btn_vol_plus,R.id.btn_vol_minus,
+                R.id.btn_up,R.id.btn_down,
+                R.id.btn_left,R.id.btn_right})
+    public boolean onLongClick(View view) {
+        Log.i("gky", "onLongClick");
+        vibrator.vibrate(100);
+        switch (view.getId()) {
+            case R.id.btn_vol_plus:
+                NetUtils.getInstance().sendLongKey(KeyEvent.KEYCODE_VOLUME_UP, true);
+                break;
+            case R.id.btn_vol_minus:
+                NetUtils.getInstance().sendLongKey(KeyEvent.KEYCODE_VOLUME_DOWN, true);
+                break;
+            case R.id.btn_up:
+                NetUtils.getInstance().sendLongKey(KeyEvent.KEYCODE_DPAD_UP, true);
+                break;
+            case R.id.btn_down:
+                NetUtils.getInstance().sendLongKey(KeyEvent.KEYCODE_DPAD_DOWN, true);
+                break;
+            case R.id.btn_left:
+                NetUtils.getInstance().sendLongKey(KeyEvent.KEYCODE_DPAD_LEFT, true);
+                break;
+            case R.id.btn_right:
+                NetUtils.getInstance().sendLongKey(KeyEvent.KEYCODE_DPAD_RIGHT, true);
+                break;
+            default:
+                break;
+        }
+        return true;
+    }
+
+    @OnTouch({R.id.btn_vol_plus,R.id.btn_vol_minus,
+            R.id.btn_up,R.id.btn_down,
+            R.id.btn_left,R.id.btn_right})
+    public boolean onTouch(View view, MotionEvent event) {
+        if (event.getAction() == MotionEvent.ACTION_UP) {
+            if (NetUtils.getInstance().isLongKeyFlag()) {
+                Log.i("gky","onTouch stop longKey");
+                switch (view.getId()) {
+                    case R.id.btn_vol_plus:
+                        NetUtils.getInstance().sendLongKey(KeyEvent.KEYCODE_VOLUME_UP, false);
+                        break;
+                    case R.id.btn_vol_minus:
+                        NetUtils.getInstance().sendLongKey(KeyEvent.KEYCODE_VOLUME_DOWN, false);
+                        break;
+                    case R.id.btn_up:
+                        NetUtils.getInstance().sendLongKey(KeyEvent.KEYCODE_DPAD_UP, false);
+                        break;
+                    case R.id.btn_down:
+                        NetUtils.getInstance().sendLongKey(KeyEvent.KEYCODE_DPAD_DOWN, false);
+                        break;
+                    case R.id.btn_left:
+                        NetUtils.getInstance().sendLongKey(KeyEvent.KEYCODE_DPAD_LEFT, false);
+                        break;
+                    case R.id.btn_right:
+                        NetUtils.getInstance().sendLongKey(KeyEvent.KEYCODE_DPAD_RIGHT, false);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        return false;
     }
 
     @OnClick(R.id.btn_vol_minus)
@@ -262,6 +335,7 @@ public class TvRemoteActivity extends BaseActivity{
                         @Override
                         public void onAnimationEnd(Animator animation) {
                             relativeLayout_navi.setVisibility(View.GONE);
+                            touchPadview.setVisibility(View.GONE);
                             relativeLayout_num.setTranslationX(0);
                             relativeLayout_num.setVisibility(View.VISIBLE);
                             curIndex = relativeLayout_num.getId();
@@ -277,6 +351,23 @@ public class TvRemoteActivity extends BaseActivity{
                         @Override
                         public void onAnimationEnd(Animator animation) {
                             relativeLayout_num.setVisibility(View.GONE);
+                            relativeLayout_navi.setVisibility(View.GONE);
+                            touchPadview.setTranslationX(0);
+                            touchPadview.setVisibility(View.VISIBLE);
+                            curIndex = touchPadview.getId();
+                        }
+                    })
+                    .start();
+        }else if (curIndex == touchPadview.getId()) {
+            touchPadview.animate()
+                    .translationX(-Utils.getScreenWidth(this))
+                    .setDuration(300)
+                    .setInterpolator(new AccelerateInterpolator())
+                    .setListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            relativeLayout_num.setVisibility(View.GONE);
+                            touchPadview.setVisibility(View.GONE);
                             relativeLayout_navi.setTranslationX(0);
                             relativeLayout_navi.setVisibility(View.VISIBLE);
                             curIndex = relativeLayout_navi.getId();
@@ -297,6 +388,7 @@ public class TvRemoteActivity extends BaseActivity{
                             @Override
                             public void onAnimationEnd(Animator animation) {
                                 relativeLayout_navi.setVisibility(View.GONE);
+                                touchPadview.setVisibility(View.GONE);
                                 relativeLayout_num.setTranslationX(0);
                                 relativeLayout_num.setVisibility(View.VISIBLE);
                                 curIndex = relativeLayout_num.getId();
@@ -312,6 +404,23 @@ public class TvRemoteActivity extends BaseActivity{
                             @Override
                             public void onAnimationEnd(Animator animation) {
                                 relativeLayout_num.setVisibility(View.GONE);
+                                relativeLayout_navi.setVisibility(View.GONE);
+                                touchPadview.setTranslationX(0);
+                                touchPadview.setVisibility(View.VISIBLE);
+                                curIndex = touchPadview.getId();
+                            }
+                        })
+                        .start();
+            }else if (curIndex == touchPadview.getId()) {
+                touchPadview.animate()
+                        .translationX(Utils.getScreenWidth(this))
+                        .setDuration(300)
+                        .setInterpolator(new AccelerateInterpolator())
+                        .setListener(new AnimatorListenerAdapter() {
+                            @Override
+                            public void onAnimationEnd(Animator animation) {
+                                relativeLayout_num.setVisibility(View.GONE);
+                                touchPadview.setVisibility(View.GONE);
                                 relativeLayout_navi.setTranslationX(0);
                                 relativeLayout_navi.setVisibility(View.VISIBLE);
                                 curIndex = relativeLayout_navi.getId();

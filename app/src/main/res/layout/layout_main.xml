@@ -406,5 +406,15 @@
                 android:layout_toRightOf="@id/relativeLayout_navigation"
                 android:layout_alignBottom="@id/relativeLayout_navigation"/>
         </RelativeLayout>
+
+        <com.tv.remote.view.TouchPadView
+            android:id="@+id/touchPadview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            android:background="@drawable/bg_pointer"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginBottom="10dp"/>
     </RelativeLayout>
 </LinearLayout>

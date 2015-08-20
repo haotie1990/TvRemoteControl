@@ -11,6 +11,8 @@ public class NetConst {
 
     public static final int STTP_LOAD_TYPE_CMD_INPUT_TEXT = 53;
 
+    public static final int STTP_LOAD_TYPE_CMD_REVEIVE = 54;
+
     /*54~72预留添加更多的命令*/
 
     public static final int STTP_LOAD_TYPE_CMD_XXX = 73;

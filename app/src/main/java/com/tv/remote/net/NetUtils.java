@@ -22,25 +22,31 @@ import java.util.concurrent.Executors;
 /**
  * Created by 凯阳 on 2015/8/7.
  */
-public class NetUtils {
+public class NetUtils extends Handler{
 
     private static NetUtils instance = null;
 
     private ExecutorService mPool;
 
     private volatile String ipClient = null;
+    private volatile boolean isLongKeyFlag = true;
+
     private DatagramSocket initClientSocket = null;
     private DatagramSocket receiveSocket = null;
     private DatagramSocket sendSocket = null;
     private ReceiveRunnale receiveRunnale = null;
     private InitGetClient initGetClient = null;
 
+    private static final int SUSPENDED_STATE = 0x1101;
+
+    private volatile byte[] subBuffer = null;
+
     private Handler mHandler = null;
 
     private boolean isInitClient = false;
 
     private NetUtils() {
-        mPool = Executors.newFixedThreadPool(6);
+        mPool = Executors.newFixedThreadPool(10);
     }
 
     public static NetUtils getInstance() {
@@ -76,6 +82,10 @@ public class NetUtils {
         return ipClient != null ? true :false;
     }
 
+    public boolean isLongKeyFlag() {
+        return isLongKeyFlag;
+    }
+
     public void init(Handler handler) {
         Log.i("gky", "init client send broadcast our ip and get tv's ip");
         mHandler = handler;
@@ -86,26 +96,68 @@ public class NetUtils {
     }
 
     public void sendKey(int keyCode) {
-        byte[] buffer = getByteBuffer(
-                NetConst.STTP_LOAD_TYPE_IR_KEY,
-                0
-        );
-        for (int i = 65;i < 69; i++) {
-            buffer[i] = Integer.valueOf(keyCode & 0xFF).byteValue();
-            keyCode = keyCode >> 8;
-        }
-        buffer[73] = 0;
+
         if (ipClient == null) {
             if (mHandler != null) {
                 mHandler.sendEmptyMessage(3);
             }
             return;
         }
+
+        byte[] buffer = getByteBuffer(
+                NetConst.STTP_LOAD_TYPE_IR_KEY,
+                0,
+                0
+        );
+        for (int i = 9;i <= 12; i++) {
+            buffer[i] = Integer.valueOf(keyCode & 0xFF).byteValue();
+            keyCode = keyCode >> 8;
+        }
+        buffer[13] = 0;
+
+        SendRunnale sendRunnale = new SendRunnale(buffer);
+        mPool.submit(sendRunnale);
+    }
+
+    public void sendLongKey(int keyCode, boolean isLongKeyFlag) {
+
+        if (ipClient == null) {
+            if (mHandler != null) {
+                mHandler.sendEmptyMessage(3);
+            }
+            return;
+        }
+
+        this.isLongKeyFlag = isLongKeyFlag;
+        byte[] buffer = getByteBuffer(
+                NetConst.STTP_LOAD_TYPE_IR_KEY,
+                0,
+                1
+        );
+        for (int i = 9; i <= 12; i++) {
+            buffer[i] = Integer.valueOf(keyCode & 0xFF).byteValue();
+            keyCode = keyCode >> 8;
+        }
+        buffer[13] = (byte) (isLongKeyFlag ? 1:2);
+
+        subBuffer = buffer;/*因为需要TV端确认,则保存发送数据*/
+        Message msg = obtainMessage();
+        msg.what = SUSPENDED_STATE;
+        sendMessageDelayed(msg,2000);/*数据挂起，等待重传，1500毫秒后*/
+
         SendRunnale sendRunnale = new SendRunnale(buffer);
         mPool.submit(sendRunnale);
     }
 
     public void sendMsg(String msg) {
+
+        if (ipClient == null) {
+            if (mHandler != null) {
+                mHandler.sendEmptyMessage(3);
+            }
+            return;
+        }
+
         int length = msg.getBytes().length;
         if (length > 1330 ) {
             if (mHandler != null) {
@@ -115,11 +167,12 @@ public class NetUtils {
         }
         byte[] buffer = getByteBuffer(
                 NetConst.STTP_LOAD_TYPE_CMD_INPUT_TEXT,
-                length
+                length,
+                0
         );
         try {
             ByteArrayInputStream bip = new ByteArrayInputStream(msg.getBytes());
-            bip.read(buffer, 65, length);
+            bip.read(buffer, 9, length);
             bip.close();
         }catch (IOException e) {
             e.printStackTrace();
@@ -138,63 +191,45 @@ public class NetUtils {
         mPool.submit(sendRunnale);
     }
 
-    public byte[] getByteBuffer(int load_type, int sn) {
+    public byte[] getByteBuffer(int load_type, int sn, int receive_flag) {
         byte[] buffer = new byte[1400];
+
         /*初始化版本*/
-        int version = 1;
-        for (int i = 0; i < 2; i++) {
-            buffer[i] = Integer.valueOf(version & 0xFF).byteValue();
-            version = version >> 8;
-        }
-
+        int version = 1 << 6;
         /*初始化设备ID*/
-        int id = 55;/*TV:56,Phone:55*/
-        for (int i = 2; i < 6; i++) {
-            buffer[i] = Integer.valueOf(id & 0xFF).byteValue();
-            id = id >> 8;
-        }
+        int deviceId = 55;/*TV:56,Phone:55*/
+        buffer[0] = Integer.valueOf((version | deviceId)).byteValue();
+        buffer[1] = Integer.valueOf(load_type).byteValue();
 
-        for (int i = 9; i < 13; i++) {
-            buffer[i] = Integer.valueOf(load_type & 0xFF).byteValue();
-            load_type = load_type >> 8;
-        }
-
-        for (int i = 16; i < 20; i++) {
+        /*SN:传输序列*/
+        for (int i = 2; i <= 3; i++) {
             buffer[i] = Integer.valueOf(sn & 0xFF).byteValue();
             sn = sn >> 8;
         }
 
+        buffer[4] = (byte) receive_flag;/*是否需要回传确认*/
+
         return buffer;
     }
 
-    private boolean parseRecieveBuffer(byte[] buffer) {
-        int version = 0;
-        for (int i = 0; i < 2; i++) {
-            int shift = i * 8;
-            version += (buffer[i] & 0xFF) << shift;
-        }
+    private boolean parseReceiveBuffer(byte[] buffer) {
+        int version = (buffer[0] & 0xC0) >> 6;
+        int deviceId = (buffer[0] & 0x3f);
         Log.i("gky","version is "+version);
-        int id = 0;
-        for (int i = 2; i < 6; i++) {
-            int shift = (i-2) * 8;
-            id += (buffer[i] & 0xFF) << shift;
-        }
-        Log.i("gky","id is "+id);
-        int load_type = 0;
-        for (int i = 9; i < 13; i++) {
-            int shift = (i-9) * 8;
-            load_type += (buffer[i] & 0xFF) << shift;
-        }
+        Log.i("gky","deviceId is "+deviceId);
+        int load_type = buffer[1];
         Log.i("gky","load_type is "+load_type);
         int sn = 0;
-        for (int i = 16; i < 20; i++) {
-            int shift = (i-16) * 8;
+        for (int i = 2; i <= 3; i++) {
+            int shift = (i-2) * 8;
             sn += (buffer[i] & 0xFF) << shift;
         }
         Log.i("gky","sn is "+sn);
+        int receive = buffer[4];
+        Log.i("gky","receive is "+receive);
         if (load_type == NetConst.STTP_LOAD_TYPE_IR_KEY) {
             return false;
-        }else if (load_type == NetConst.STTP_LOAD_TYPE_REQUEST_CONNECTION && id == 56) {
+        }else if (load_type == NetConst.STTP_LOAD_TYPE_REQUEST_CONNECTION && deviceId == 56) {
             Log.i("gky", "init get client's ip is " + ipClient);
             Message msg = mHandler.obtainMessage();
             msg.what = 1;
@@ -213,21 +248,33 @@ public class NetUtils {
                 mHandler.sendEmptyMessage(2);
             }
             return true;
+        }else if (load_type == NetConst.STTP_LOAD_TYPE_CMD_REVEIVE && deviceId == 56) {
+            if (hasMessages(SUSPENDED_STATE)) {
+                Log.i("gky","remove suspended long key message");
+                removeMessages(SUSPENDED_STATE);
+                subBuffer = null;
+            }
+            return true;
         }else {
             return false;
         }
     }
 
-    private int getIpAddress() {
-        WifiManager wifiManager = (WifiManager) AppContext.getContext().
-                getSystemService(Context.WIFI_SERVICE);
-        if (!wifiManager.isWifiEnabled()) {
-            wifiManager.setWifiEnabled(true);
-        }
-        WifiInfo info = wifiManager.getConnectionInfo();
-        int ip = info.getIpAddress();
-        return ip;
+    @Override
+    public void handleMessage(Message msg) {
+        switch (msg.what) {
+            case SUSPENDED_STATE:
+                if (subBuffer != null) {
+                    Log.i("gky", "resend longKey Message to Tv");
+                    SendRunnale sendRunnale = new SendRunnale(subBuffer);
+                    mPool.submit(sendRunnale);
 
+                    Message message = obtainMessage();
+                    message.what = SUSPENDED_STATE;
+                    sendMessageDelayed(message, 2000);
+                }
+                break;
+        }
     }
 
     public class InitGetClient implements Runnable {
@@ -251,6 +298,7 @@ public class NetUtils {
 
                 byte[] buffer = getByteBuffer(
                         NetConst.STTP_LOAD_TYPE_REQUEST_CONNECTION,
+                        0,
                         0
                 );
 
@@ -259,7 +307,7 @@ public class NetUtils {
                 boolean flag = false;
                 while (ipClient == null) {/*循环发送广播,直到与TV建立连接或App退出*/
                     initClientSocket.send(datagramPacket);
-                    Thread.sleep(500);
+                    Thread.sleep(1000);
                     Log.i("gky","send broadcast our ip ");
                     if (mHandler != null && !flag) {
                         mHandler.sendEmptyMessage(0);
@@ -303,9 +351,9 @@ public class NetUtils {
                     receiveSocket.bind(new InetSocketAddress(BROADCAST_PORT));
                 }
                 while (isFlag) {
-                    Log.i("gky", "enter loop and wait receive data");
+                    Log.i("gky", "---------->enter loop and wait receive data");
                     receiveSocket.receive(datagramPacket);
-                    if (ipClient == null && parseRecieveBuffer(reviveBuffer)) {
+                    if (parseReceiveBuffer(reviveBuffer) && ipClient == null) {
                         ipClient = datagramPacket.getAddress().getHostAddress();
                         Log.i("gky", "receive data from " + ipClient +" and get it");
                     }
