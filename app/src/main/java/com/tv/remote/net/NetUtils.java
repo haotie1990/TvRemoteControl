@@ -29,7 +29,7 @@ public class NetUtils extends Handler{
     private ExecutorService mPool;
 
     private volatile String ipClient = null;
-    private volatile boolean isLongKeyFlag = true;
+    private volatile boolean isLongKeyFlag = false;
 
     private DatagramSocket initClientSocket = null;
     private DatagramSocket receiveSocket = null;
@@ -113,7 +113,7 @@ public class NetUtils extends Handler{
             buffer[i] = Integer.valueOf(keyCode & 0xFF).byteValue();
             keyCode = keyCode >> 8;
         }
-        buffer[13] = 0;
+        buffer[13] = 0;/*是否长按键 0:否*/
 
         SendRunnale sendRunnale = new SendRunnale(buffer);
         mPool.submit(sendRunnale);
@@ -138,7 +138,7 @@ public class NetUtils extends Handler{
             buffer[i] = Integer.valueOf(keyCode & 0xFF).byteValue();
             keyCode = keyCode >> 8;
         }
-        buffer[13] = (byte) (isLongKeyFlag ? 1:2);
+        buffer[13] = (byte) (isLongKeyFlag ? 1:2);/*长按键开始结束1:开始2:结束*/
 
         subBuffer = buffer;/*因为需要TV端确认,则保存发送数据*/
         Message msg = obtainMessage();
@@ -172,7 +172,8 @@ public class NetUtils extends Handler{
         );
         try {
             ByteArrayInputStream bip = new ByteArrayInputStream(msg.getBytes());
-            bip.read(buffer, 9, length);
+            int byteLength = bip.read(buffer, 9, length);
+            Log.d("gky","byteLength is "+byteLength+" msgLength is "+length);
             bip.close();
         }catch (IOException e) {
             e.printStackTrace();
@@ -307,7 +308,7 @@ public class NetUtils extends Handler{
                 boolean flag = false;
                 while (ipClient == null) {/*循环发送广播,直到与TV建立连接或App退出*/
                     initClientSocket.send(datagramPacket);
-                    Thread.sleep(1000);
+                    Thread.sleep(1500);
                     Log.i("gky","send broadcast our ip ");
                     if (mHandler != null && !flag) {
                         mHandler.sendEmptyMessage(0);
@@ -315,7 +316,7 @@ public class NetUtils extends Handler{
                     }
 
                 }
-                Log.i("gky","########ipClient is not null########");
+                Log.i("gky","########ipClient is "+ipClient+"########");
             } catch (IOException e) {
                 Log.e("gky",getClass()+":"+e.toString());
                 e.printStackTrace();
@@ -357,6 +358,7 @@ public class NetUtils extends Handler{
                         ipClient = datagramPacket.getAddress().getHostAddress();
                         Log.i("gky", "receive data from " + ipClient +" and get it");
                     }
+                    Log.e("gky", "reveive data from ------------->>" +ipClient);
                 }
             } catch (SocketException e) {
                 Log.e("gky",getClass()+":"+e.toString());
