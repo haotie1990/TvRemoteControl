@@ -1,13 +1,8 @@
 package com.tv.remote.net;
 
-import android.content.Context;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
-
-import com.tv.remote.app.AppContext;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -16,6 +11,9 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -29,6 +27,8 @@ public class NetUtils extends Handler{
     private ExecutorService mPool;
 
     private volatile String ipClient = null;
+    private List<String> ipList;
+
     private volatile boolean isLongKeyFlag = false;
 
     private DatagramSocket initClientSocket = null;
@@ -40,6 +40,9 @@ public class NetUtils extends Handler{
     private static final int SUSPENDED_STATE = 0x1101;
 
     private volatile byte[] subBuffer = null;
+    private int subRandomFlag = -1;
+
+    private Map<Integer, byte[]> subMap;
 
     private Handler mHandler = null;
 
@@ -109,11 +112,8 @@ public class NetUtils extends Handler{
                 0,
                 0
         );
-        for (int i = 9;i <= 12; i++) {
-            buffer[i] = Integer.valueOf(keyCode & 0xFF).byteValue();
-            keyCode = keyCode >> 8;
-        }
-        buffer[13] = 0;/*是否长按键 0:否*/
+        buffer[8] = Integer.valueOf(keyCode).byteValue();
+        buffer[9] = 0;/*是否长按键 0:否*/
 
         SendRunnale sendRunnale = new SendRunnale(buffer);
         mPool.submit(sendRunnale);
@@ -134,11 +134,8 @@ public class NetUtils extends Handler{
                 0,
                 1
         );
-        for (int i = 9; i <= 12; i++) {
-            buffer[i] = Integer.valueOf(keyCode & 0xFF).byteValue();
-            keyCode = keyCode >> 8;
-        }
-        buffer[13] = (byte) (isLongKeyFlag ? 1:2);/*长按键开始结束1:开始2:结束*/
+        buffer[8] = Integer.valueOf(keyCode).byteValue();
+        buffer[9] = (byte) (isLongKeyFlag ? 1:2) ;/*长按键开始结束1:开始2:结束*/
 
         subBuffer = buffer;/*因为需要TV端确认,则保存发送数据*/
         Message msg = obtainMessage();
@@ -172,7 +169,7 @@ public class NetUtils extends Handler{
         );
         try {
             ByteArrayInputStream bip = new ByteArrayInputStream(msg.getBytes());
-            int byteLength = bip.read(buffer, 9, length);
+            int byteLength = bip.read(buffer, 8, length);
             Log.d("gky","byteLength is "+byteLength+" msgLength is "+length);
             bip.close();
         }catch (IOException e) {
@@ -200,7 +197,8 @@ public class NetUtils extends Handler{
         /*初始化设备ID*/
         int deviceId = 55;/*TV:56,Phone:55*/
         buffer[0] = Integer.valueOf((version | deviceId)).byteValue();
-        buffer[1] = Integer.valueOf(load_type).byteValue();
+        buffer[1] = (byte) (Integer.valueOf(load_type & 0x7F).byteValue()
+                            | (receive_flag != 0 ? 0x80:0x00));
 
         /*SN:传输序列*/
         for (int i = 2; i <= 3; i++) {
@@ -208,7 +206,8 @@ public class NetUtils extends Handler{
             sn = sn >> 8;
         }
 
-        buffer[4] = (byte) receive_flag;/*是否需要回传确认*/
+        /*java.util.UUID*/
+        buffer[4] = (byte) new Random().nextInt(255);/*是否需要回传确认*/
 
         return buffer;
     }
@@ -216,22 +215,29 @@ public class NetUtils extends Handler{
     private boolean parseReceiveBuffer(byte[] buffer) {
         int version = (buffer[0] & 0xC0) >> 6;
         int deviceId = (buffer[0] & 0x3f);
-        Log.i("gky","version is "+version);
-        Log.i("gky","deviceId is "+deviceId);
-        int load_type = buffer[1];
-        Log.i("gky","load_type is "+load_type);
-        int sn = 0;
-        for (int i = 2; i <= 3; i++) {
-            int shift = (i-2) * 8;
-            sn += (buffer[i] & 0xFF) << shift;
+        int load_type = buffer[1] & 0x7F;
+        int receive_flag = (buffer[1] & 0x80) >> 7;
+        int sn = (buffer[2] & 0xFF) | ((buffer[3] & 0xFF) << 8);
+        Log.d("gky", "parseReceiveBuffer::version[" + version + "] deviceId[" + deviceId
+                + "] load_type[" + load_type + "] SN[" + sn + "] receive_flag[" + receive_flag + "]");
+        int randomFlag = buffer[4] & 0xFF;
+
+        if (subBuffer != null) {
+            Log.i("gky","randomFlag: "+randomFlag);
+            Log.i("gky", "subBuffer::randomFlag: " + (subBuffer[4] & 0xFF));
+            if ((subBuffer[4] & 0xFF) == randomFlag) {
+                if (hasMessages(SUSPENDED_STATE)) {
+                    Log.i("gky", "remove suspended long key message");
+                    removeMessages(SUSPENDED_STATE);
+                    subBuffer = null;
+                }
+                return true;
+            }
         }
-        Log.i("gky","sn is "+sn);
-        int receive = buffer[4];
-        Log.i("gky","receive is "+receive);
+
         if (load_type == NetConst.STTP_LOAD_TYPE_IR_KEY) {
             return false;
         }else if (load_type == NetConst.STTP_LOAD_TYPE_REQUEST_CONNECTION && deviceId == 56) {
-            Log.i("gky", "init get client's ip is " + ipClient);
             Message msg = mHandler.obtainMessage();
             msg.what = 1;
             if (mHandler != null && !isInitClient) {
@@ -247,13 +253,6 @@ public class NetUtils extends Handler{
             isInitClient = false;
             if (mHandler != null) {
                 mHandler.sendEmptyMessage(2);
-            }
-            return true;
-        }else if (load_type == NetConst.STTP_LOAD_TYPE_CMD_REVEIVE && deviceId == 56) {
-            if (hasMessages(SUSPENDED_STATE)) {
-                Log.i("gky","remove suspended long key message");
-                removeMessages(SUSPENDED_STATE);
-                subBuffer = null;
             }
             return true;
         }else {
@@ -298,7 +297,7 @@ public class NetUtils extends Handler{
                 }
 
                 byte[] buffer = getByteBuffer(
-                        NetConst.STTP_LOAD_TYPE_REQUEST_CONNECTION,
+                        NetConst.STTP_LOAD_TYPE_BROADCAST,
                         0,
                         0
                 );
