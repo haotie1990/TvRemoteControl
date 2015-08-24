@@ -40,7 +40,6 @@ public class NetUtils extends Handler{
     private static final int SUSPENDED_STATE = 0x1101;
 
     private volatile byte[] subBuffer = null;
-    private int subRandomFlag = -1;
 
     private Map<Integer, byte[]> subMap;
 
@@ -220,8 +219,8 @@ public class NetUtils extends Handler{
         int sn = (buffer[2] & 0xFF) | ((buffer[3] & 0xFF) << 8);
         Log.d("gky", "parseReceiveBuffer::version[" + version + "] deviceId[" + deviceId
                 + "] load_type[" + load_type + "] SN[" + sn + "] receive_flag[" + receive_flag + "]");
-        int randomFlag = buffer[4] & 0xFF;
 
+        int randomFlag = buffer[4] & 0xFF;
         if (subBuffer != null) {
             Log.i("gky","randomFlag: "+randomFlag);
             Log.i("gky", "subBuffer::randomFlag: " + (subBuffer[4] & 0xFF));
@@ -354,7 +353,11 @@ public class NetUtils extends Handler{
                     Log.i("gky", "---------->enter loop and wait receive data");
                     receiveSocket.receive(datagramPacket);
                     if (parseReceiveBuffer(reviveBuffer) && ipClient == null) {
-                        ipClient = datagramPacket.getAddress().getHostAddress();
+                        String ip = datagramPacket.getAddress().getHostAddress();
+                        if (!ipList.contains(ip)) {
+                            ipList.add(ip);
+                        }
+                        ipClient = ip;
                         Log.i("gky", "receive data from " + ipClient +" and get it");
                     }
                     Log.e("gky", "reveive data from ------------->>" +ipClient);
