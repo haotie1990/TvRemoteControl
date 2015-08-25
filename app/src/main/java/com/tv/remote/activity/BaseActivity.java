@@ -212,15 +212,11 @@ public abstract class BaseActivity extends AppCompatActivity
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case 0:
-                    Toast.makeText(BaseActivity.this, "初始化完成，等待链接...",
+                    Toast.makeText(BaseActivity.this, "初始化完成，查找设备...",
                             Toast.LENGTH_SHORT).show();
                     break;
                 case 1:
                     getDevices().addItem((DeviceInfo) msg.obj);
-                    DeviceInfo deviceInfo1 = new DeviceInfo("192.168.0.1","dev1",true,false);
-                    getDevices().addItem(deviceInfo1);
-                    DeviceInfo deviceInfo2 = new DeviceInfo("192.168.0.2","dev2",true,false);
-                    getDevices().addItem(deviceInfo2);
                     if (mDialog != null && mDialog.isShowing()) {
                         mDialog.setMessage("已经发现："+getDevices().getItemCount()+"设备");
                     }
