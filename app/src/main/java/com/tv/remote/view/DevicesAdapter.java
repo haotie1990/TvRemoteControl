@@ -9,6 +9,7 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.tv.remote.R;
+import com.tv.remote.app.AppContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,21 +22,18 @@ import butterknife.InjectView;
  */
 public class DevicesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
 
-    private Context mContext;
-
     private OnItemClickListener onItemClickListener = null;
 
     private List<DeviceInfo> mDevices;
     private DeviceInfo curDeviceInfo;
 
-    public DevicesAdapter(Context context) {
-        mContext = context;
+    public DevicesAdapter() {
         mDevices = new ArrayList<>();
     }
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(mContext).inflate(R.layout.view_item_device, parent, false);
+        View view = LayoutInflater.from(AppContext.getContext()).inflate(R.layout.view_item_device, parent, false);
         return new DeviceItemViewHolder(view);
     }
 
@@ -53,12 +51,13 @@ public class DevicesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     public void addItem(DeviceInfo deviceInfo) {
         mDevices.add(deviceInfo);
-        notifyDataSetChanged();
+        notifyItemInserted(mDevices.size() - 1);
     }
 
     public void removeItem(DeviceInfo deviceInfo) {
+        int position = mDevices.indexOf(deviceInfo);
         mDevices.remove(deviceInfo);
-        notifyDataSetChanged();
+        notifyItemRemoved(position);
     }
 
     public void setOnItemClickListener(OnItemClickListener onItemClickListener) {
@@ -117,20 +116,6 @@ public class DevicesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                             tvDeviceIp.getText().toString(), mDeviceInfo.isSelected);
                 }
             }
-        }
-    }
-
-    public class DeviceInfo{
-        public String ip;
-        public String name;
-        public boolean isActivated;
-        public boolean isSelected;
-
-        public DeviceInfo(String ip, String name, boolean isActivated, boolean isSelected) {
-            this.ip = ip;
-            this.isActivated = isActivated;
-            this.isSelected = isSelected;
-            this.name = name;
         }
     }
 

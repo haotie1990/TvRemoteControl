@@ -30,6 +30,10 @@
             android:launchMode="singleTask"
             android:screenOrientation="portrait">
         </activity>
+
+        <activity android:name=".activity.TvDevicesActivity"
+            android:launchMode="singleTask"
+            android:screenOrientation="portrait"/>
     </application>
 
 </manifest>

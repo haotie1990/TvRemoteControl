@@ -36,6 +36,7 @@ public class GlobalMenuAdapter extends ArrayAdapter<GlobalMenuAdapter.GlobalMenu
     private void setupMenuItems(){
         menuItems.add(new GlobalMenuItem(R.drawable.btn_tvremote, "TV Remote"));
         menuItems.add(new GlobalMenuItem(R.drawable.btn_optedit, "Send Text"));
+        menuItems.add(new GlobalMenuItem(R.drawable.btn_ico_tv,"Devices"));
         menuItems.add(GlobalMenuItem.dividerMenuItem());
         menuItems.add(new GlobalMenuItem(0, "Settings"));
         menuItems.add(new GlobalMenuItem(0, "About"));

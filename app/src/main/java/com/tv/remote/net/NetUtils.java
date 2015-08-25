@@ -1,16 +1,21 @@
 package com.tv.remote.net;
 
+import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
+import com.tv.remote.view.DeviceInfo;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -49,6 +54,7 @@ public class NetUtils extends Handler{
 
     private NetUtils() {
         mPool = Executors.newFixedThreadPool(10);
+        ipList = new ArrayList<>();
     }
 
     public static NetUtils getInstance() {
@@ -58,18 +64,28 @@ public class NetUtils extends Handler{
         return instance;
     }
 
+    public void stopInitClient() {
+        if (initClientSocket != null && !initClientSocket.isClosed()) {
+            initGetClient.stop();
+            initClientSocket.close();
+            initClientSocket = null;
+            initGetClient = null;
+        }
+    }
+
     public void release() {
         Log.i("gky","close all socket");
         ipClient = null;
         isInitClient = false;
         mHandler = null;
         if (initClientSocket != null && !initClientSocket.isClosed()) {
+            initGetClient.stop();
             initClientSocket.close();
             initClientSocket = null;
             initGetClient = null;
         }
         if (receiveSocket != null && !receiveSocket.isClosed()) {
-            receiveRunnale.setFlag(false);
+            receiveRunnale.stop();
             receiveRunnale = null;
             receiveSocket.close();
             receiveSocket = null;
@@ -211,7 +227,7 @@ public class NetUtils extends Handler{
         return buffer;
     }
 
-    private boolean parseReceiveBuffer(byte[] buffer) {
+    private void parseReceiveBuffer(byte[] buffer, DatagramPacket datagramPacket) throws UnsupportedEncodingException {
         int version = (buffer[0] & 0xC0) >> 6;
         int deviceId = (buffer[0] & 0x3f);
         int load_type = buffer[1] & 0x7F;
@@ -230,32 +246,30 @@ public class NetUtils extends Handler{
                     removeMessages(SUSPENDED_STATE);
                     subBuffer = null;
                 }
-                return true;
+                return;
             }
         }
 
-        if (load_type == NetConst.STTP_LOAD_TYPE_IR_KEY) {
-            return false;
-        }else if (load_type == NetConst.STTP_LOAD_TYPE_REQUEST_CONNECTION && deviceId == 56) {
-            Message msg = mHandler.obtainMessage();
-            msg.what = 1;
-            if (mHandler != null && !isInitClient) {
-                mHandler.sendMessage(msg);
-                isInitClient = true;
+        if (load_type == NetConst.STTP_LOAD_TYPE_REQUEST_CONNECTION && deviceId == 56) {
+            String ip = datagramPacket.getAddress().getHostAddress();
+            if (ipList != null && !ipList.contains(ip)) {
+                int length = buffer[8] & 0xFF | (buffer[9] & 0xFF) << 8;
+                String deviceName = new String(buffer,10,length,"utf-8");
+                Log.i("gky","REVEIVE CONNECTION FROM "+deviceName+"["+ip+"]");
+                if (!deviceName.equals("")) {
+                    if (ipClient == null) {
+                        ipClient = ip;
+                    }
+                    ipList.add(ip);
+                    Message msg = mHandler.obtainMessage();
+                    DeviceInfo deviceInfo = new DeviceInfo(ip, deviceName, true, ip.equals(ipClient));
+                    msg.obj = deviceInfo;
+                    msg.what = 1;
+                    if (mHandler != null) {
+                        mHandler.sendMessage(msg);
+                    }
+                }
             }
-            if (initClientSocket != null) {
-                initClientSocket.close();
-            }
-            return true;
-        }else if (load_type == NetConst.STTP_LOAD_TYPE_REQUEST_DISCONNECTION) {
-            ipClient = null;
-            isInitClient = false;
-            if (mHandler != null) {
-                mHandler.sendEmptyMessage(2);
-            }
-            return true;
-        }else {
-            return false;
         }
     }
 
@@ -280,8 +294,14 @@ public class NetUtils extends Handler{
 
         private static final int BROADCAST_PORT = 5555;
 
+        private volatile boolean isFlag = true;
+
         public InitGetClient() {
             super();
+        }
+
+        public void stop() {
+            isFlag = false;
         }
 
         @Override
@@ -300,11 +320,17 @@ public class NetUtils extends Handler{
                         0,
                         0
                 );
+                int length = Build.PRODUCT.getBytes().length;
+                buffer[8] = Integer.valueOf(length & 0xFF).byteValue();
+                buffer[9] = Integer.valueOf((length >> 8) & 0xFF).byteValue();
+                ByteArrayInputStream bip = new ByteArrayInputStream(Build.PRODUCT.getBytes());
+                bip.read(buffer,10,length);
+                bip.close();
 
                 DatagramPacket datagramPacket = new DatagramPacket(buffer,buffer.length,
                         InetAddress.getByName(broadcastIp),BROADCAST_PORT);
                 boolean flag = false;
-                while (ipClient == null) {/*循环发送广播,直到与TV建立连接或App退出*/
+                while (isFlag) {/*循环发送广播,直到与TV建立连接或App退出*/
                     initClientSocket.send(datagramPacket);
                     Thread.sleep(1500);
                     Log.i("gky","send broadcast our ip ");
@@ -335,8 +361,8 @@ public class NetUtils extends Handler{
         public ReceiveRunnale() {
         }
 
-        public void setFlag(boolean isFlag) {
-            this.isFlag = isFlag;
+        public void stop() {
+            this.isFlag = false;
         }
 
         @Override
@@ -350,17 +376,10 @@ public class NetUtils extends Handler{
                     receiveSocket.bind(new InetSocketAddress(BROADCAST_PORT));
                 }
                 while (isFlag) {
-                    Log.i("gky", "---------->enter loop and wait receive data");
+                    Log.d("gky", "---------->enter loop and wait receive data<----------");
                     receiveSocket.receive(datagramPacket);
-                    if (parseReceiveBuffer(reviveBuffer) && ipClient == null) {
-                        String ip = datagramPacket.getAddress().getHostAddress();
-                        if (!ipList.contains(ip)) {
-                            ipList.add(ip);
-                        }
-                        ipClient = ip;
-                        Log.i("gky", "receive data from " + ipClient +" and get it");
-                    }
-                    Log.e("gky", "reveive data from ------------->>" +ipClient);
+                    Log.i("gky","receive from: "+datagramPacket.getAddress().getHostAddress());
+                    parseReceiveBuffer(reviveBuffer, datagramPacket);
                 }
             } catch (SocketException e) {
                 Log.e("gky",getClass()+":"+e.toString());

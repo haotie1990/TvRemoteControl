@@ -1,6 +1,8 @@
 package com.tv.remote.activity;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
@@ -18,6 +20,8 @@ import com.tv.remote.R;
 import com.tv.remote.net.NetUtils;
 import com.tv.remote.utils.DrawerLayoutInstaller;
 import com.tv.remote.utils.Utils;
+import com.tv.remote.view.DeviceInfo;
+import com.tv.remote.view.DevicesAdapter;
 import com.tv.remote.view.GlobalMenu;
 
 import java.lang.ref.WeakReference;
@@ -40,7 +44,13 @@ public abstract class BaseActivity extends AppCompatActivity
 
     private DrawerLayout drawerLayout;
 
+    private static ProgressDialog mDialog;
+
+    private static NetHandler netHandler;
+
     private static List<Activity> mActivities = new ArrayList<>();
+
+    private static DevicesAdapter mDeviceAdapter = new DevicesAdapter();
 
     @Override
     public void setContentView(int layoutResID) {
@@ -48,6 +58,8 @@ public abstract class BaseActivity extends AppCompatActivity
         ButterKnife.inject(this);
         initToolbar();
         initDrawer();
+        initNetHandler();
+        initProgressDialog();
     }
 
     @Override
@@ -64,7 +76,6 @@ public abstract class BaseActivity extends AppCompatActivity
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (event.getKeyCode() == KeyEvent.KEYCODE_VOLUME_UP
                 || event.getKeyCode() == KeyEvent.KEYCODE_VOLUME_DOWN) {
-            Log.i("gky","intercetp volume key return true");
             NetUtils.getInstance().sendKey(keyCode);
             return true;
         }
@@ -72,17 +83,20 @@ public abstract class BaseActivity extends AppCompatActivity
     }
 
     protected void add(Activity activity) {
-        Log.i("gky","add "+activity);
         mActivities.add(activity);
         if (!NetUtils.getInstance().isConnectToClient()) {
-            NetUtils.getInstance().init(new NetHandler(this));
+            if (mDialog != null) {
+                mDialog.show();
+            }
+            Message msg = netHandler.obtainMessage();
+            msg.what = 5;
+            netHandler.sendMessageDelayed(msg, 15000);
+            NetUtils.getInstance().init(netHandler);
         }
     }
 
     protected void remove(Activity activity) {
-        Log.i("gky","remove "+activity);
         mActivities.remove(activity);
-        Log.i("gky","size "+mActivities.size());
         if (mActivities.size() == 0) {
             NetUtils.getInstance().release();
         }
@@ -116,6 +130,16 @@ public abstract class BaseActivity extends AppCompatActivity
                 .build();
     }
 
+    public DevicesAdapter getDevices() {
+        return mDeviceAdapter;
+    }
+
+    private void initNetHandler() {
+        if (netHandler == null) {
+            netHandler = new NetHandler();
+        }
+    }
+
     @Override
     public void onGlobalMenuHeaderClick(View v) {
         drawerLayout.closeDrawer(Gravity.LEFT);
@@ -147,40 +171,78 @@ public abstract class BaseActivity extends AppCompatActivity
                     getActivityBySuper().finish();
                 }
             },200);
+        }else if (position == 3
+                && !getActivityBySuper().getTitle().equals(TvDevicesActivity.class.getSimpleName())) {
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    Intent intent = new Intent(getActivityBySuper(), TvDevicesActivity.class);
+                    getActivityBySuper().startActivity(intent);
+                    getActivityBySuper().overridePendingTransition(0, 0);
+                    getActivityBySuper().finish();
+                }
+            },200);
         }
-
     }
 
-    public static class NetHandler extends Handler {
+    private void initProgressDialog() {
+        mDialog = new ProgressDialog(getActivityBySuper());
+        mDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        mDialog.setCancelable(true);
+        mDialog.setCanceledOnTouchOutside(false);
+        mDialog.setMessage("正在连接TV");
+        mDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "取消",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        NetUtils.getInstance().stopInitClient();
+                        if (netHandler.hasMessages(5)) {
+                            netHandler.removeMessages(5);
+                        }
+                     }
+                });
+    }
 
-        private WeakReference<BaseActivity> mActivity;
+    public class NetHandler extends Handler {
 
-        public NetHandler(BaseActivity activity) {
-            mActivity = new WeakReference<BaseActivity>(activity);
+        public NetHandler() {
         }
 
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case 0:
-                    Toast.makeText(mActivity.get(), "初始化完成，等待链接...",
+                    Toast.makeText(BaseActivity.this, "初始化完成，等待链接...",
                             Toast.LENGTH_SHORT).show();
                     break;
                 case 1:
-                    Toast.makeText(mActivity.get(),"连接到电视，可以使用！",
-                            Toast.LENGTH_SHORT).show();
+                    getDevices().addItem((DeviceInfo) msg.obj);
+                    if (mDialog != null && mDialog.isShowing()) {
+                        mDialog.setMessage("已经发现："+getDevices().getItemCount()+"设备");
+                    }
+                    if (hasMessages(5)) {
+                        removeMessages(5);
+                    }
                     break;
                 case 2:
-                    Toast.makeText(mActivity.get(),"连接已经断开，App不可用。",
+                    Toast.makeText(BaseActivity.this,"连接已经断开，App不可用。",
                             Toast.LENGTH_SHORT).show();
                     break;
                 case 3:
-                    Toast.makeText(mActivity.get(),"未连接到TV，App不可用。",
+                    Toast.makeText(BaseActivity.this,"未连接到TV，App不可用。",
                             Toast.LENGTH_SHORT).show();
                     break;
                 case 4:
-                    Toast.makeText(mActivity.get(),"输入无效，请重新输入！",
+                    Toast.makeText(BaseActivity.this,"输入无效，请重新输入！",
                             Toast.LENGTH_SHORT).show();
+                    break;
+                case 5:
+                    Toast.makeText(BaseActivity.this,"连接超时......",
+                            Toast.LENGTH_SHORT).show();
+                    if (mDialog != null && mDialog.isShowing()) {
+                        mDialog.dismiss();
+                    }
+                    NetUtils.getInstance().stopInitClient();
                     break;
             }
         }
