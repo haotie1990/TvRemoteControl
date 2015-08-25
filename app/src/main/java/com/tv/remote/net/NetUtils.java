@@ -347,7 +347,7 @@ public class NetUtils extends Handler{
                 boolean flag = false;
                 while (isFlag) {/*循环发送广播,直到与TV建立连接或App退出*/
                     initClientSocket.send(datagramPacket);
-                    Thread.sleep(1500);
+                    Thread.sleep(2500);
                     Log.i("gky","send broadcast our ip ");
                     if (mHandler != null && !flag) {
                         mHandler.sendEmptyMessage(0);

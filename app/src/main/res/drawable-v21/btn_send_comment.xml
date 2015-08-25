@@ -5,6 +5,7 @@
     <item>
         <shape android:shape="rectangle">
             <solid android:color="@color/btn_send_normal" />
+            <corners android:radius="5dp"/>
         </shape>
     </item>
 </ripple>

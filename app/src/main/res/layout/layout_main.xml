@@ -416,5 +416,38 @@
             android:layout_marginLeft="10dp"
             android:layout_marginRight="10dp"
             android:layout_marginBottom="10dp"/>
+
+        <RelativeLayout
+            android:id="@+id/relativeLayout_msg"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            android:layout_centerInParent="true"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp">
+
+            <EditText
+                android:id="@+id/etComment"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:textSize="16sp"
+                android:textColor="#555555"
+                android:hint="请输入不超过一百四十字的内容..."
+                android:background="@drawable/bg_edit_comments"
+                android:gravity="left|top"
+                android:padding="2dp"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentLeft="true"
+                android:layout_marginBottom="5dp"/>
+
+            <com.tv.remote.view.SendCommentButton
+                android:id="@+id/btnSendComment"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_marginLeft="5dp"
+                android:background="@drawable/btn_send_comment"
+                android:orientation="vertical"
+                android:layout_below="@id/etComment"/>
+        </RelativeLayout>
     </RelativeLayout>
 </LinearLayout>

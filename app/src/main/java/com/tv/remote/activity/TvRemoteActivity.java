@@ -37,6 +37,9 @@ public class TvRemoteActivity extends BaseActivity{
     @InjectView(R.id.touchPadview)
     TouchPadView touchPadview;
 
+    @InjectView(R.id.relativeLayout_msg)
+    RelativeLayout relativeLayout_msg;
+
     @InjectView(R.id.btn_n_left)
     ImageButton btn_n_left;
 
@@ -336,6 +339,7 @@ public class TvRemoteActivity extends BaseActivity{
                         public void onAnimationEnd(Animator animation) {
                             relativeLayout_navi.setVisibility(View.GONE);
                             touchPadview.setVisibility(View.GONE);
+                            relativeLayout_msg.setVisibility(View.GONE);
                             relativeLayout_num.setTranslationX(0);
                             relativeLayout_num.setVisibility(View.VISIBLE);
                             curIndex = relativeLayout_num.getId();
@@ -352,6 +356,7 @@ public class TvRemoteActivity extends BaseActivity{
                         public void onAnimationEnd(Animator animation) {
                             relativeLayout_num.setVisibility(View.GONE);
                             relativeLayout_navi.setVisibility(View.GONE);
+                            relativeLayout_msg.setVisibility(View.GONE);
                             touchPadview.setTranslationX(0);
                             touchPadview.setVisibility(View.VISIBLE);
                             curIndex = touchPadview.getId();
@@ -368,6 +373,24 @@ public class TvRemoteActivity extends BaseActivity{
                         public void onAnimationEnd(Animator animation) {
                             relativeLayout_num.setVisibility(View.GONE);
                             touchPadview.setVisibility(View.GONE);
+                            relativeLayout_navi.setVisibility(View.GONE);
+                            relativeLayout_msg.setTranslationX(0);
+                            relativeLayout_msg.setVisibility(View.VISIBLE);
+                            curIndex = relativeLayout_msg.getId();
+                        }
+                    })
+                    .start();
+        }else if (curIndex == relativeLayout_msg.getId()) {
+            relativeLayout_msg.animate()
+                    .translationX(-Utils.getScreenWidth(this))
+                    .setDuration(300)
+                    .setInterpolator(new AccelerateInterpolator())
+                    .setListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            relativeLayout_msg.setVisibility(View.GONE);
+                            touchPadview.setVisibility(View.GONE);
+                            relativeLayout_num.setVisibility(View.GONE);
                             relativeLayout_navi.setTranslationX(0);
                             relativeLayout_navi.setVisibility(View.VISIBLE);
                             curIndex = relativeLayout_navi.getId();
@@ -389,6 +412,7 @@ public class TvRemoteActivity extends BaseActivity{
                             public void onAnimationEnd(Animator animation) {
                                 relativeLayout_navi.setVisibility(View.GONE);
                                 touchPadview.setVisibility(View.GONE);
+                                relativeLayout_msg.setVisibility(View.GONE);
                                 relativeLayout_num.setTranslationX(0);
                                 relativeLayout_num.setVisibility(View.VISIBLE);
                                 curIndex = relativeLayout_num.getId();
@@ -405,6 +429,7 @@ public class TvRemoteActivity extends BaseActivity{
                             public void onAnimationEnd(Animator animation) {
                                 relativeLayout_num.setVisibility(View.GONE);
                                 relativeLayout_navi.setVisibility(View.GONE);
+                                relativeLayout_msg.setVisibility(View.GONE);
                                 touchPadview.setTranslationX(0);
                                 touchPadview.setVisibility(View.VISIBLE);
                                 curIndex = touchPadview.getId();
@@ -421,6 +446,24 @@ public class TvRemoteActivity extends BaseActivity{
                             public void onAnimationEnd(Animator animation) {
                                 relativeLayout_num.setVisibility(View.GONE);
                                 touchPadview.setVisibility(View.GONE);
+                                relativeLayout_navi.setVisibility(View.GONE);
+                                relativeLayout_msg.setTranslationX(0);
+                                relativeLayout_msg.setVisibility(View.VISIBLE);
+                                curIndex = relativeLayout_msg.getId();
+                            }
+                        })
+                        .start();
+            }else if (curIndex == relativeLayout_msg.getId()) {
+                relativeLayout_msg.animate()
+                        .translationX(Utils.getScreenWidth(this))
+                        .setDuration(300)
+                        .setInterpolator(new AccelerateInterpolator())
+                        .setListener(new AnimatorListenerAdapter() {
+                            @Override
+                            public void onAnimationEnd(Animator animation) {
+                                relativeLayout_num.setVisibility(View.GONE);
+                                touchPadview.setVisibility(View.GONE);
+                                relativeLayout_msg.setVisibility(View.GONE);
                                 relativeLayout_navi.setTranslationX(0);
                                 relativeLayout_navi.setVisibility(View.VISIBLE);
                                 curIndex = relativeLayout_navi.getId();

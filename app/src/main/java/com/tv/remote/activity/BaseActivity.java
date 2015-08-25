@@ -13,11 +13,13 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.tv.remote.R;
+import com.tv.remote.app.AppContext;
 import com.tv.remote.net.NetUtils;
 import com.tv.remote.utils.DrawerLayoutInstaller;
 import com.tv.remote.utils.Utils;
@@ -91,12 +93,17 @@ public abstract class BaseActivity extends AppCompatActivity
         mActivities.add(activity);
         if (!NetUtils.getInstance().isConnectToClient()) {
             if (mDialog != null) {
+                if (mDialog.isShowing()) {
+                    mDialog.dismiss();
+                }
+                mDialog.setMessage("正在连接TV");
                 mDialog.show();
+
+                Message msg = netHandler.obtainMessage();
+                msg.what = 5;
+                netHandler.sendMessageDelayed(msg, 15000);
+                NetUtils.getInstance().init(netHandler);
             }
-            Message msg = netHandler.obtainMessage();
-            msg.what = 5;
-            netHandler.sendMessageDelayed(msg, 15000);
-            NetUtils.getInstance().init(netHandler);
         }
     }
 
@@ -128,6 +135,7 @@ public abstract class BaseActivity extends AppCompatActivity
             mDialog.setMessage("正在连接TV");
             mDialog.show();
             NetUtils.getInstance().startFindDevices();
+            netHandler.sendEmptyMessageDelayed(5,15000);
         }
     }
 
@@ -201,7 +209,8 @@ public abstract class BaseActivity extends AppCompatActivity
 
     private void initProgressDialog() {
         if (mDialog == null) {
-            mDialog = new ProgressDialog(getActivityBySuper());
+            mDialog = new ProgressDialog(AppContext.getContext());
+            mDialog.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
             mDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
             mDialog.setCancelable(true);
             mDialog.setCanceledOnTouchOutside(false);
