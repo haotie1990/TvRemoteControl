@@ -8,6 +8,7 @@ import android.view.View;
 
 import com.tv.remote.R;
 import com.tv.remote.net.NetUtils;
+import com.tv.remote.view.DividerItemDecoration;
 
 import butterknife.InjectView;
 
@@ -34,6 +35,8 @@ public class TvDevicesActivity extends BaseActivity{
             rvDevices.setLayoutManager(new LinearLayoutManager(this));
             rvDevices.setHasFixedSize(true);
             rvDevices.setOverScrollMode(View.OVER_SCROLL_NEVER);
+            RecyclerView.ItemDecoration itemDecoration = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL_LIST);
+            rvDevices.addItemDecoration(itemDecoration);
         }
     }
 

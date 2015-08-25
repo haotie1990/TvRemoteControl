@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -67,6 +68,7 @@ public class TouchPadView extends View{
             if (getSpace(lastX, lastY, (int)event.getX(), (int)event.getY())) {
                 lastX = (int) event.getX();
                 lastY = (int) event.getY();
+                Log.i("gky","(x,y)-->"+"("+lastX+","+lastY+")");
                 mPath.lineTo(lastX, lastY);
             }
         }else if (event.getAction() == MotionEvent.ACTION_UP) {

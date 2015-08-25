@@ -113,6 +113,14 @@ public class NetUtils extends Handler{
         mPool.submit(receiveRunnale);
     }
 
+    public void setIpClient(String ip) {
+        ipClient = ip;
+    }
+
+    public String getIpClient() {
+        return ipClient;
+    }
+
     public void sendKey(int keyCode) {
 
         if (ipClient == null) {

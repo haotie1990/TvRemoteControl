@@ -1,6 +1,5 @@
 package com.tv.remote.view;
 
-import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,6 +9,7 @@ import android.widget.TextView;
 
 import com.tv.remote.R;
 import com.tv.remote.app.AppContext;
+import com.tv.remote.net.NetUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -96,18 +96,16 @@ public class DevicesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
         @Override
         public void onClick(View v) {
-            if (!mDeviceInfo.isActivated) {
+            if (mDeviceInfo.isActivated && !mDeviceInfo.isSelected) {
                 mDeviceInfo.isSelected = !mDeviceInfo.isSelected;
-                int resId = mDeviceInfo.isSelected ? R.drawable.btn_check_button_square_on : R.drawable.btn_check_button_square_off;
-                ibCheckState.setImageResource(resId);
                 if (mDeviceInfo.isSelected) {
-                    curDeviceInfo = mDeviceInfo;
+                    NetUtils.getInstance().setIpClient(mDeviceInfo.ip);
                 }
                 for (DeviceInfo deviceInfo : mDevices) {
-                    if (!curDeviceInfo.ip.equals(deviceInfo.ip)) {
-                        deviceInfo.isSelected = false;
-                    }else {
+                    if (NetUtils.getInstance().getIpClient().equals(deviceInfo.ip)) {
                         deviceInfo.isSelected = true;
+                    }else {
+                        deviceInfo.isSelected = false;
                     }
                 }
                 notifyDataSetChanged();
