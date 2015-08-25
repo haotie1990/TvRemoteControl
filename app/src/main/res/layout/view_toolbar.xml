@@ -3,12 +3,23 @@
     android:id="@+id/toolbar"
     android:layout_width="match_parent"
     android:layout_height="?attr/actionBarSize"
-    android:background="@color/style_color_primary">
+    android:background="@color/style_color_primary"
+    android:gravity="center">
 
     <TextView
-        android:layout_width="match_parent"
+        android:layout_width="200dp"
         android:layout_height="match_parent"
         android:gravity="center"
         android:text="Skyworth"
-        android:textSize="22sp" />
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:layout_marginLeft="40dp"
+        android:layout_marginRight="30dp"/>
+
+    <ImageButton
+        android:id="@+id/ibFindDevice"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/btn_ico_tv"
+        android:background="@android:color/transparent"/>
 </android.support.v7.widget.Toolbar>

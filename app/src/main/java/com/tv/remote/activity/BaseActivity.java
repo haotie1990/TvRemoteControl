@@ -14,6 +14,7 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.tv.remote.R;
@@ -30,6 +31,7 @@ import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import butterknife.OnClick;
 
 /**
  * Created by 凯阳 on 2015/8/12.
@@ -41,6 +43,9 @@ public abstract class BaseActivity extends AppCompatActivity
 
     @InjectView(R.id.toolbar)
     Toolbar toolbar;
+
+    @InjectView(R.id.ibFindDevice)
+    ImageButton ibFindDevice;
 
     private DrawerLayout drawerLayout;
 
@@ -117,6 +122,15 @@ public abstract class BaseActivity extends AppCompatActivity
         return toolbar;
     }
 
+    @OnClick(R.id.ibFindDevice)
+    public void onClickFindDevice() {
+        if (mDialog != null && !mDialog.isShowing()) {
+            mDialog.setMessage("正在连接TV");
+            mDialog.show();
+            NetUtils.getInstance().startFindDevices();
+        }
+    }
+
     private void initDrawer() {
         GlobalMenu menuView = new GlobalMenu(this);
         menuView.setOnHeaderClickListener(this);
@@ -186,21 +200,23 @@ public abstract class BaseActivity extends AppCompatActivity
     }
 
     private void initProgressDialog() {
-        mDialog = new ProgressDialog(getActivityBySuper());
-        mDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-        mDialog.setCancelable(true);
-        mDialog.setCanceledOnTouchOutside(false);
-        mDialog.setMessage("正在连接TV");
-        mDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "取消",
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        NetUtils.getInstance().stopInitClient();
-                        if (netHandler.hasMessages(5)) {
-                            netHandler.removeMessages(5);
+        if (mDialog == null) {
+            mDialog = new ProgressDialog(getActivityBySuper());
+            mDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            mDialog.setCancelable(true);
+            mDialog.setCanceledOnTouchOutside(false);
+            mDialog.setMessage("正在连接TV");
+            mDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "取消",
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            NetUtils.getInstance().stopInitClient();
+                            if (netHandler.hasMessages(5)) {
+                                netHandler.removeMessages(5);
+                            }
                         }
-                     }
-                });
+                    });
+        }
     }
 
     public class NetHandler extends Handler {

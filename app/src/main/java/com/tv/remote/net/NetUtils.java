@@ -113,6 +113,13 @@ public class NetUtils extends Handler{
         mPool.submit(receiveRunnale);
     }
 
+    public void startFindDevices() {
+        if (initGetClient == null) {
+            initGetClient = new InitGetClient();
+        }
+        mPool.submit(initGetClient);
+    }
+
     public void setIpClient(String ip) {
         ipClient = ip;
     }
