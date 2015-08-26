@@ -5,10 +5,13 @@ import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Vibrator;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
+import android.view.animation.AnimationUtils;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 
@@ -16,6 +19,7 @@ import com.tv.remote.R;
 import com.tv.remote.net.NetUtils;
 import com.tv.remote.utils.KeyEvent;
 import com.tv.remote.utils.Utils;
+import com.tv.remote.view.SendCommentButton;
 import com.tv.remote.view.TouchPadView;
 
 import butterknife.InjectView;
@@ -26,7 +30,8 @@ import butterknife.OnTouch;
 /**
  * Created by 凯阳 on 2015/8/6.
  */
-public class TvRemoteActivity extends BaseActivity{
+public class TvRemoteActivity extends BaseActivity
+        implements SendCommentButton.OnSendClickListener{
 
     @InjectView(R.id.relativeLayout_navi)
     RelativeLayout relativeLayout_navi;
@@ -39,6 +44,12 @@ public class TvRemoteActivity extends BaseActivity{
 
     @InjectView(R.id.relativeLayout_msg)
     RelativeLayout relativeLayout_msg;
+
+    @InjectView(R.id.etComment)
+    EditText etComment;
+
+    @InjectView(R.id.btnSendComment)
+    SendCommentButton btnSendComment;
 
     @InjectView(R.id.btn_n_left)
     ImageButton btn_n_left;
@@ -57,9 +68,10 @@ public class TvRemoteActivity extends BaseActivity{
         setTitle(this.getClass().getSimpleName());
         vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
         curIndex = relativeLayout_navi.getId();
-
+        initSendCommentBtn();
         add(this);
     }
+
 
     @OnClick(R.id.btn_ch_plus)
     public void onClickChPlus() {
@@ -492,5 +504,27 @@ public class TvRemoteActivity extends BaseActivity{
     @Override
     public Activity getActivityBySuper() {
         return this;
+    }
+
+    private void initSendCommentBtn() {
+        if (btnSendComment != null) {
+            btnSendComment.setOnSendClickListener(this);
+        }
+    }
+    @Override
+    public void onSendClickListener(View v) {
+        if (vallidateComment()) {
+            NetUtils.getInstance().sendMsg(etComment.getText().toString());
+            etComment.setText(null);
+            btnSendComment.setCurrentState(SendCommentButton.STATE_DONE);
+        }
+    }
+
+    private boolean vallidateComment() {
+        if (TextUtils.isEmpty(etComment.getText())) {
+            btnSendComment.startAnimation(AnimationUtils.loadAnimation(this, R.anim.shake_error));
+            return false;
+        }
+        return true;
     }
 }

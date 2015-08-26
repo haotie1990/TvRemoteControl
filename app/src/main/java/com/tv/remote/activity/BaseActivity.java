@@ -27,7 +27,6 @@ import com.tv.remote.view.DeviceInfo;
 import com.tv.remote.view.DevicesAdapter;
 import com.tv.remote.view.GlobalMenu;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 

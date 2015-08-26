@@ -16,6 +16,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -42,11 +43,11 @@ public class NetUtils extends Handler{
     private ReceiveRunnale receiveRunnale = null;
     private InitGetClient initGetClient = null;
 
-    private static final int SUSPENDED_STATE = 0x1101;
+    private static final int  PACKET_TITLE_LENGTH = 8;
 
-    private volatile byte[] subBuffer = null;
-
-    private Map<Integer, byte[]> subMap;
+    private static final int WAIT_RESPONSE_STATE = 0xFF;
+    private int randomCount = 0;
+    private Map<Integer, Object[]> suspendMap;
 
     private Handler mHandler = null;
 
@@ -55,6 +56,7 @@ public class NetUtils extends Handler{
     private NetUtils() {
         mPool = Executors.newFixedThreadPool(10);
         ipList = new ArrayList<>();
+        suspendMap = new HashMap<>();
     }
 
     public static NetUtils getInstance() {
@@ -144,8 +146,8 @@ public class NetUtils extends Handler{
         );
         buffer[8] = Integer.valueOf(keyCode).byteValue();
         buffer[9] = 0;/*是否长按键 0:否*/
-
-        SendRunnale sendRunnale = new SendRunnale(buffer);
+        int packetLength = PACKET_TITLE_LENGTH + 4;
+        SendRunnale sendRunnale = new SendRunnale(buffer, packetLength);
         mPool.submit(sendRunnale);
     }
 
@@ -167,13 +169,19 @@ public class NetUtils extends Handler{
         buffer[8] = Integer.valueOf(keyCode).byteValue();
         buffer[9] = (byte) (isLongKeyFlag ? 1:2) ;/*长按键开始结束1:开始2:结束*/
 
-        subBuffer = buffer;/*因为需要TV端确认,则保存发送数据*/
-        Message msg = obtainMessage();
-        msg.what = SUSPENDED_STATE;
-        sendMessageDelayed(msg,2000);/*数据挂起，等待重传，1500毫秒后*/
+        int key = buffer[4] & 0xFF;
+        int msgWhat = WAIT_RESPONSE_STATE | (key << 8);
+        Log.d("gky","wait 2000ms and send message:"+msgWhat+" again. (key:"+key+")");
+        sendEmptyMessageDelayed(msgWhat, 2000);
 
-        SendRunnale sendRunnale = new SendRunnale(buffer);
+        int packetLength = PACKET_TITLE_LENGTH + 4;
+        SendRunnale sendRunnale = new SendRunnale(buffer, packetLength);
         mPool.submit(sendRunnale);
+
+        Object[] objects = new Object[2];
+        objects[0] = buffer;
+        objects[1] = packetLength;
+        suspendMap.put(key, objects);
     }
 
     public void sendMsg(String msg) {
@@ -194,12 +202,14 @@ public class NetUtils extends Handler{
         }
         byte[] buffer = getByteBuffer(
                 NetConst.STTP_LOAD_TYPE_CMD_INPUT_TEXT,
-                length,
+                0,
                 0
         );
         try {
+            buffer[8] = Integer.valueOf(length & 0xFF).byteValue();
+            buffer[9] = Integer.valueOf((length >> 8) & 0xFF).byteValue();
             ByteArrayInputStream bip = new ByteArrayInputStream(msg.getBytes());
-            int byteLength = bip.read(buffer, 8, length);
+            int byteLength = bip.read(buffer, 10, length);
             Log.d("gky","byteLength is "+byteLength+" msgLength is "+length);
             bip.close();
         }catch (IOException e) {
@@ -215,7 +225,8 @@ public class NetUtils extends Handler{
             }
             return;
         }
-        SendRunnale sendRunnale = new SendRunnale(buffer);
+        int packetLength = PACKET_TITLE_LENGTH + length + 4;
+        SendRunnale sendRunnale = new SendRunnale(buffer, packetLength);
         mPool.submit(sendRunnale);
     }
 
@@ -236,8 +247,7 @@ public class NetUtils extends Handler{
             sn = sn >> 8;
         }
 
-        /*java.util.UUID*/
-        buffer[4] = (byte) new Random().nextInt(255);/*是否需要回传确认*/
+        buffer[4] = (byte) (randomCount != 255?randomCount++:(randomCount-=255));
 
         return buffer;
     }
@@ -251,17 +261,17 @@ public class NetUtils extends Handler{
         Log.d("gky", "parseReceiveBuffer::version[" + version + "] deviceId[" + deviceId
                 + "] load_type[" + load_type + "] SN[" + sn + "] receive_flag[" + receive_flag + "]");
 
-        int randomFlag = buffer[4] & 0xFF;
-        if (subBuffer != null) {
-            Log.i("gky","randomFlag: "+randomFlag);
-            Log.i("gky", "subBuffer::randomFlag: " + (subBuffer[4] & 0xFF));
-            if ((subBuffer[4] & 0xFF) == randomFlag) {
-                if (hasMessages(SUSPENDED_STATE)) {
-                    Log.i("gky", "remove suspended long key message");
-                    removeMessages(SUSPENDED_STATE);
-                    subBuffer = null;
+        int randomKey = buffer[4] & 0xFF;
+        int msgWhat = WAIT_RESPONSE_STATE | (randomKey << 8);
+        if (suspendMap.size() != 0) {
+            Log.i("gky","randomFlag: "+randomKey);
+            if (suspendMap.containsKey(randomKey)) {
+                if (hasMessages(msgWhat)) {
+                    Log.i("gky", "remove suspend message: "+msgWhat);
+                    removeMessages(msgWhat);
+                    suspendMap.remove(randomKey);
                 }
-                return;
+                return;/*应答的确认信息不再解析，直接返回*/
             }
         }
 
@@ -290,18 +300,15 @@ public class NetUtils extends Handler{
 
     @Override
     public void handleMessage(Message msg) {
-        switch (msg.what) {
-            case SUSPENDED_STATE:
-                if (subBuffer != null) {
-                    Log.i("gky", "resend longKey Message to Tv");
-                    SendRunnale sendRunnale = new SendRunnale(subBuffer);
-                    mPool.submit(sendRunnale);
-
-                    Message message = obtainMessage();
-                    message.what = SUSPENDED_STATE;
-                    sendMessageDelayed(message, 2000);
-                }
-                break;
+        int what = msg.what & 0xFF;
+        int randomKey = (msg.what >> 8) & 0xFF;
+        if (what == WAIT_RESPONSE_STATE && suspendMap.containsKey(randomKey)) {
+            Object[] objects = suspendMap.get(randomKey);
+            int packetLength = (int) objects[1];
+            byte[] bf = (byte[]) objects[0];
+            SendRunnale sendRunnale = new SendRunnale(bf, packetLength);
+            mPool.submit(sendRunnale);
+            Log.i("gky","resend message: "+randomKey);
         }
     }
 
@@ -413,17 +420,19 @@ public class NetUtils extends Handler{
 
     public class SendRunnale implements Runnable {
 
-        byte[] bf = null;
+        private byte[] bf = null;
+        private int length = -1;
         private static final int BROADCAST_PORT = 5555;
 
-        public SendRunnale(byte[] buffer) {
+        public SendRunnale(byte[] buffer, int length) {
             bf = buffer;
+            this.length = length;
         }
 
         @Override
         public void run() {
             try {
-                DatagramPacket datagramPacket = new DatagramPacket(bf,bf.length,
+                DatagramPacket datagramPacket = new DatagramPacket(bf,length,
                     InetAddress.getByName(ipClient),BROADCAST_PORT);
                 if (sendSocket == null || sendSocket.isClosed()) {
                     sendSocket = new DatagramSocket(null);
@@ -431,7 +440,7 @@ public class NetUtils extends Handler{
                     sendSocket.bind(new InetSocketAddress(BROADCAST_PORT));
                 }
                 sendSocket.send(datagramPacket);
-                Log.i("gky", "send broadcast key success!");
+                Log.i("gky", "send message: "+(bf[4]&0xFF)+" to: "+ipClient);
             } catch (SocketException e) {
                 Log.e("gky",getClass()+":"+e.toString());
                 e.printStackTrace();
@@ -439,7 +448,6 @@ public class NetUtils extends Handler{
                 Log.e("gky",getClass()+":"+e.toString());
                 e.printStackTrace();
             } finally {
-                Log.w("gky","close SendKeyRunnale socket");
                 sendSocket.close();
             }
         }
