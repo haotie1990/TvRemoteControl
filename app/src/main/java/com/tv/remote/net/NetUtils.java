@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -51,8 +50,6 @@ public class NetUtils extends Handler{
 
     private Handler mHandler = null;
 
-    private boolean isInitClient = false;
-
     private NetUtils() {
         mPool = Executors.newFixedThreadPool(10);
         ipList = new ArrayList<>();
@@ -76,10 +73,14 @@ public class NetUtils extends Handler{
     }
 
     public void release() {
-        Log.i("gky","close all socket");
+        Log.i("gky", "close all socket and release all resources.");
         ipClient = null;
-        isInitClient = false;
         mHandler = null;
+        suspendMap.clear();
+        ipList.clear();
+        suspendMap = null;
+        ipList = null;
+
         if (initClientSocket != null && !initClientSocket.isClosed()) {
             initGetClient.stop();
             initClientSocket.close();
@@ -346,10 +347,11 @@ public class NetUtils extends Handler{
                 buffer[8] = Integer.valueOf(length & 0xFF).byteValue();
                 buffer[9] = Integer.valueOf((length >> 8) & 0xFF).byteValue();
                 ByteArrayInputStream bip = new ByteArrayInputStream(Build.PRODUCT.getBytes());
-                bip.read(buffer,10,length);
+                bip.read(buffer, 10, length);
                 bip.close();
 
-                DatagramPacket datagramPacket = new DatagramPacket(buffer,buffer.length,
+                int packetLength = PACKET_TITLE_LENGTH + length + 4;
+                DatagramPacket datagramPacket = new DatagramPacket(buffer,packetLength,
                         InetAddress.getByName(broadcastIp),BROADCAST_PORT);
                 boolean flag = false;
                 while (isFlag) {/*循环发送广播,直到与TV建立连接或App退出*/
@@ -440,7 +442,7 @@ public class NetUtils extends Handler{
                     sendSocket.bind(new InetSocketAddress(BROADCAST_PORT));
                 }
                 sendSocket.send(datagramPacket);
-                Log.i("gky", "send message: "+(bf[4]&0xFF)+" to: "+ipClient);
+                Log.i("gky", "send message: " + (bf[4] & 0xFF) + " to: " + ipClient);
             } catch (SocketException e) {
                 Log.e("gky",getClass()+":"+e.toString());
                 e.printStackTrace();
