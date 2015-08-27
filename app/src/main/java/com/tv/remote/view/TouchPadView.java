@@ -6,13 +6,13 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Path;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
 import com.tv.remote.R;
+import com.tv.remote.net.NetUtils;
 
 /**
  * Created by 凯阳 on 2015/8/17.
@@ -20,11 +20,10 @@ import com.tv.remote.R;
 public class TouchPadView extends View{
 
     private Paint mPaint;
-    private Path mPath;
     private Bitmap mBitmap;
 
-    private int lastX;
-    private int lastY;
+    private int lastX = 546;
+    private int lastY = 324;
 
     public TouchPadView(Context context) {
         this(context, null);
@@ -40,8 +39,6 @@ public class TouchPadView extends View{
     }
 
     private void init() {
-        mPath = new Path();
-
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setDither(true);
@@ -55,36 +52,37 @@ public class TouchPadView extends View{
 
     @Override
     protected void onDraw(Canvas canvas) {
-        canvas.drawPath(mPath, mPaint);
+        canvas.drawBitmap(mBitmap, lastX, lastY, mPaint);
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (event.getAction() == MotionEvent.ACTION_DOWN) {
-            lastX = (int) event.getX();
-            lastY = (int) event.getY();
-            mPath.moveTo(lastX, lastY);
-        }else if (event.getAction() == MotionEvent.ACTION_MOVE) {
-            if (getSpace(lastX, lastY, (int)event.getX(), (int)event.getY())) {
+        if (event.getAction() == MotionEvent.ACTION_MOVE) {
+            int[] location = getSpace(lastX, lastY, (int)event.getX(), (int)event.getY());
+            if (location != null) {
+                int dstX = (location[0] * 1920) / getWidth();
+                int dstY = (location[1] * 1080) / getHeight();
+                NetUtils.getInstance().sendVirtualMotionEvents(dstX, dstY);
                 lastX = (int) event.getX();
                 lastY = (int) event.getY();
-                Log.i("gky","(x,y)-->"+"("+lastX+","+lastY+")");
-                mPath.lineTo(lastX, lastY);
             }
-        }else if (event.getAction() == MotionEvent.ACTION_UP) {
-            mPath.reset();
         }
         invalidate();
         return true;
     }
 
-    private boolean getSpace(int x, int y, int pX, int pY) {
+    private int[] getSpace(int x, int y, int pX, int pY) {
+        if (pX < 0 || pX > getWidth() || pY < 0 || pY > getHeight()) {
+            return  null;
+        }
         int w = Math.abs(pX - x);
         int h = Math.abs(pY - y);
+        int dstX = pX - x;
+        int dstY = pY - y;
         int space = (int) Math.sqrt((w*w+h*h));
-        if (space > 2) {
-            return true;
+        if (space > 10) {
+            return new int[]{dstX, dstY};
         }
-        return false;
+        return null;
     }
 }

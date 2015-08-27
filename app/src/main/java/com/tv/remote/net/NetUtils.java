@@ -51,7 +51,7 @@ public class NetUtils extends Handler{
     private Handler mHandler = null;
 
     private NetUtils() {
-        mPool = Executors.newFixedThreadPool(10);
+        mPool = Executors.newCachedThreadPool();
         ipList = new ArrayList<>();
         suspendMap = new HashMap<>();
     }
@@ -231,6 +231,37 @@ public class NetUtils extends Handler{
         mPool.submit(sendRunnale);
     }
 
+    public void sendVirtualMotionEvents(int dstX,int dstY){
+
+        if (ipClient == null) {
+            if (mHandler != null) {
+                mHandler.sendEmptyMessage(3);
+            }
+            return;
+        }
+
+        byte[] buffer = getByteBuffer(
+                NetConst.STTP_LOAD_TYPE_CMD_VIRTUAL_MOUSE,
+                0,
+                0
+        );
+
+        buffer[8] = Integer.valueOf(dstX & 0xFF).byteValue();
+        buffer[9] = Integer.valueOf((dstX >> 8) & 0xFF).byteValue();
+        buffer[10] = Integer.valueOf((dstX >> 16) & 0xFF).byteValue();
+        buffer[11] =  Integer.valueOf((dstX >> 24) & 0xFF).byteValue();
+
+        buffer[12] = Integer.valueOf(dstY & 0xFF).byteValue();
+        buffer[13] = Integer.valueOf((dstY >> 8) & 0xFF).byteValue();
+        buffer[14] = Integer.valueOf((dstY >> 16) & 0xFF).byteValue();
+        buffer[15] =  Integer.valueOf((dstY >> 24) & 0xFF).byteValue();
+
+        int packetLength = PACKET_TITLE_LENGTH + 10;
+        Log.i("gky","make virtual mouse("+dstX+","+dstY+")");
+        SendRunnale sendRunnale = new SendRunnale(buffer, packetLength);
+        mPool.submit(sendRunnale);
+    }
+
     public byte[] getByteBuffer(int load_type, int sn, int receive_flag) {
         byte[] buffer = new byte[1400];
 
@@ -248,7 +279,7 @@ public class NetUtils extends Handler{
             sn = sn >> 8;
         }
 
-        buffer[4] = (byte) (randomCount != 255?randomCount++:(randomCount-=255));
+        buffer[4] = (byte) (randomCount != 255?++randomCount:(randomCount-=255));
 
         return buffer;
     }
