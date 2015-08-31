@@ -22,8 +22,8 @@ public class TouchPadView extends View{
     private Paint mPaint;
     private Bitmap mBitmap;
 
-    private int lastX = 546;
-    private int lastY = 324;
+    private int lastX = getWidth()/2;
+    private int lastY = getHeight()/2;
 
     public TouchPadView(Context context) {
         this(context, null);
@@ -48,6 +48,7 @@ public class TouchPadView extends View{
         mPaint.setStrokeCap(Paint.Cap.ROUND);
 
         mBitmap = BitmapFactory.decodeResource(getResources(),R.drawable.ic_adjust_white_24dp);
+
     }
 
     @Override
@@ -60,9 +61,10 @@ public class TouchPadView extends View{
         if (event.getAction() == MotionEvent.ACTION_MOVE) {
             int[] location = getSpace(lastX, lastY, (int)event.getX(), (int)event.getY());
             if (location != null) {
-                int dstX = (location[0] * 1920) / getWidth();
-                int dstY = (location[1] * 1080) / getHeight();
-                NetUtils.getInstance().sendVirtualMotionEvents(dstX, dstY);
+                Log.i("gky","original location("+location[0]+","+location[1]+")");
+                int dstX = (int) (location[0] * 8);//(location[0] * 1920) / getWidth();
+                int dstY = (int) (location[1] * 8);//(location[1] * 1080) / getHeight();
+                NetUtils.getInstance().sendVirtualMotionEvents(dstX, dstY, 0);
                 lastX = (int) event.getX();
                 lastY = (int) event.getY();
             }
@@ -80,7 +82,7 @@ public class TouchPadView extends View{
         int dstX = pX - x;
         int dstY = pY - y;
         int space = (int) Math.sqrt((w*w+h*h));
-        if (space > 10) {
+        if (space > 5) {
             return new int[]{dstX, dstY};
         }
         return null;

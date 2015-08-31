@@ -42,7 +42,9 @@ public class NetUtils extends Handler{
     private ReceiveRunnale receiveRunnale = null;
     private InitGetClient initGetClient = null;
 
-    private static final int  PACKET_TITLE_LENGTH = 8;
+    private static final int PACKET_TITLE_LENGTH = 8;
+    private static final int DATA_SEGMENT_START_INDEX = 8;
+    private static final int DATE_SEGMENT_LENGTH = 1392;
 
     private static final int WAIT_RESPONSE_STATE = 0xFF;
     private int randomCount = 0;
@@ -145,9 +147,9 @@ public class NetUtils extends Handler{
                 0,
                 0
         );
-        buffer[8] = Integer.valueOf(keyCode).byteValue();
-        buffer[9] = 0;/*是否长按键 0:否*/
-        int packetLength = PACKET_TITLE_LENGTH + 4;
+        buffer[DATA_SEGMENT_START_INDEX] = Integer.valueOf(keyCode).byteValue();
+        buffer[DATA_SEGMENT_START_INDEX + 1] = 0;/*是否长按键 0:否*/
+        int packetLength = PACKET_TITLE_LENGTH + 2;
         SendRunnale sendRunnale = new SendRunnale(buffer, packetLength);
         mPool.submit(sendRunnale);
     }
@@ -167,15 +169,15 @@ public class NetUtils extends Handler{
                 0,
                 1
         );
-        buffer[8] = Integer.valueOf(keyCode).byteValue();
-        buffer[9] = (byte) (isLongKeyFlag ? 1:2) ;/*长按键开始结束1:开始2:结束*/
+        buffer[DATA_SEGMENT_START_INDEX] = Integer.valueOf(keyCode).byteValue();
+        buffer[DATA_SEGMENT_START_INDEX+1] = (byte) (isLongKeyFlag ? 1:2) ;/*长按键开始结束1:开始2:结束*/
 
         int key = buffer[4] & 0xFF;
         int msgWhat = WAIT_RESPONSE_STATE | (key << 8);
         Log.d("gky","wait 2000ms and send message:"+msgWhat+" again. (key:"+key+")");
         sendEmptyMessageDelayed(msgWhat, 2000);
 
-        int packetLength = PACKET_TITLE_LENGTH + 4;
+        int packetLength = PACKET_TITLE_LENGTH + 2;
         SendRunnale sendRunnale = new SendRunnale(buffer, packetLength);
         mPool.submit(sendRunnale);
 
@@ -195,7 +197,7 @@ public class NetUtils extends Handler{
         }
 
         int length = msg.getBytes().length;
-        if (length > 1330 ) {
+        if (length > DATE_SEGMENT_LENGTH ) {
             if (mHandler != null) {
                 mHandler.sendEmptyMessage(4);
             }
@@ -207,11 +209,8 @@ public class NetUtils extends Handler{
                 0
         );
         try {
-            buffer[8] = Integer.valueOf(length & 0xFF).byteValue();
-            buffer[9] = Integer.valueOf((length >> 8) & 0xFF).byteValue();
             ByteArrayInputStream bip = new ByteArrayInputStream(msg.getBytes());
-            int byteLength = bip.read(buffer, 10, length);
-            Log.d("gky","byteLength is "+byteLength+" msgLength is "+length);
+            bip.read(buffer, DATA_SEGMENT_START_INDEX, length);
             bip.close();
         }catch (IOException e) {
             e.printStackTrace();
@@ -220,18 +219,13 @@ public class NetUtils extends Handler{
             }
             return;
         }
-        if (ipClient == null) {
-            if (mHandler != null) {
-                mHandler.sendEmptyMessage(3);
-            }
-            return;
-        }
-        int packetLength = PACKET_TITLE_LENGTH + length + 4;
+
+        int packetLength = PACKET_TITLE_LENGTH + length;
         SendRunnale sendRunnale = new SendRunnale(buffer, packetLength);
         mPool.submit(sendRunnale);
     }
 
-    public void sendVirtualMotionEvents(int dstX,int dstY){
+    public void sendVirtualMotionEvents(int dstX,int dstY, int type){
 
         if (ipClient == null) {
             if (mHandler != null) {
@@ -249,14 +243,16 @@ public class NetUtils extends Handler{
         buffer[8] = Integer.valueOf(dstX & 0xFF).byteValue();
         buffer[9] = Integer.valueOf((dstX >> 8) & 0xFF).byteValue();
         buffer[10] = Integer.valueOf((dstX >> 16) & 0xFF).byteValue();
-        buffer[11] =  Integer.valueOf((dstX >> 24) & 0xFF).byteValue();
+        buffer[11] = Integer.valueOf((dstX >> 24) & 0xFF).byteValue();
 
         buffer[12] = Integer.valueOf(dstY & 0xFF).byteValue();
         buffer[13] = Integer.valueOf((dstY >> 8) & 0xFF).byteValue();
         buffer[14] = Integer.valueOf((dstY >> 16) & 0xFF).byteValue();
-        buffer[15] =  Integer.valueOf((dstY >> 24) & 0xFF).byteValue();
+        buffer[15] = Integer.valueOf((dstY >> 24) & 0xFF).byteValue();
 
-        int packetLength = PACKET_TITLE_LENGTH + 10;
+        buffer[15] = Integer.valueOf(type & 0xFF).byteValue();
+
+        int packetLength = PACKET_TITLE_LENGTH + 12;
         Log.i("gky","make virtual mouse("+dstX+","+dstY+")");
         SendRunnale sendRunnale = new SendRunnale(buffer, packetLength);
         mPool.submit(sendRunnale);
@@ -310,21 +306,19 @@ public class NetUtils extends Handler{
         if (load_type == NetConst.STTP_LOAD_TYPE_REQUEST_CONNECTION && deviceId == 56) {
             String ip = datagramPacket.getAddress().getHostAddress();
             if (ipList != null && !ipList.contains(ip)) {
-                int length = buffer[8] & 0xFF | (buffer[9] & 0xFF) << 8;
-                String deviceName = new String(buffer,10,length,"utf-8");
+                int length = datagramPacket.getLength() - PACKET_TITLE_LENGTH;
+                String deviceName = new String(buffer,8,length,"utf-8");
                 Log.i("gky","REVEIVE CONNECTION FROM "+deviceName+"["+ip+"]");
-                if (!deviceName.equals("")) {
-                    if (ipClient == null) {
-                        ipClient = ip;
-                    }
-                    ipList.add(ip);
-                    Message msg = mHandler.obtainMessage();
-                    DeviceInfo deviceInfo = new DeviceInfo(ip, deviceName, true, ip.equals(ipClient));
-                    msg.obj = deviceInfo;
-                    msg.what = 1;
-                    if (mHandler != null) {
-                        mHandler.sendMessage(msg);
-                    }
+                if (ipClient == null) {
+                    ipClient = ip;
+                }
+                ipList.add(ip);
+                Message msg = mHandler.obtainMessage();
+                DeviceInfo deviceInfo = new DeviceInfo(ip, deviceName, true, ip.equals(ipClient));
+                msg.obj = deviceInfo;
+                msg.what = 1;
+                if (mHandler != null) {
+                    mHandler.sendMessage(msg);
                 }
             }
         }
@@ -375,13 +369,11 @@ public class NetUtils extends Handler{
                         0
                 );
                 int length = Build.PRODUCT.getBytes().length;
-                buffer[8] = Integer.valueOf(length & 0xFF).byteValue();
-                buffer[9] = Integer.valueOf((length >> 8) & 0xFF).byteValue();
                 ByteArrayInputStream bip = new ByteArrayInputStream(Build.PRODUCT.getBytes());
-                bip.read(buffer, 10, length);
+                bip.read(buffer, 8, length);
                 bip.close();
 
-                int packetLength = PACKET_TITLE_LENGTH + length + 4;
+                int packetLength = PACKET_TITLE_LENGTH + length;
                 DatagramPacket datagramPacket = new DatagramPacket(buffer,packetLength,
                         InetAddress.getByName(broadcastIp),BROADCAST_PORT);
                 boolean flag = false;
@@ -433,7 +425,7 @@ public class NetUtils extends Handler{
                 while (isFlag) {
                     Log.d("gky", "---------->enter loop and wait receive data<----------");
                     receiveSocket.receive(datagramPacket);
-                    Log.i("gky","receive from: "+datagramPacket.getAddress().getHostAddress());
+                    Log.i("gky", "receive from: " + datagramPacket.getAddress().getHostAddress());
                     parseReceiveBuffer(reviveBuffer, datagramPacket);
                 }
             } catch (SocketException e) {

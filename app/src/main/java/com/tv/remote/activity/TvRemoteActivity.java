@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
+import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -50,6 +51,9 @@ public class TvRemoteActivity extends BaseActivity
 
     @InjectView(R.id.btnSendComment)
     SendCommentButton btnSendComment;
+
+    @InjectView(R.id.relativeLayout_touchpad)
+    RelativeLayout relativeLayout_touchpad;
 
     @InjectView(R.id.btn_n_left)
     ImageButton btn_n_left;
@@ -339,6 +343,18 @@ public class TvRemoteActivity extends BaseActivity
         runAnimationSwitchRight();
     }
 
+    @OnClick(R.id.btnMouseLeft)
+    public void onClickMouseLeft() {
+        vibrator.vibrate(100);
+        NetUtils.getInstance().sendVirtualMotionEvents(0, 0, 1);
+    }
+
+    @OnClick(R.id.btnMouseRight)
+    public void onClickMouseRight() {
+        vibrator.vibrate(100);
+        NetUtils.getInstance().sendVirtualMotionEvents(0, 0, 2);
+    }
+
     private void runAnimationSwitchLeft() {
         Log.i("gky", "runAnimationSwitch");
         if (curIndex == relativeLayout_navi.getId()) {
@@ -350,7 +366,7 @@ public class TvRemoteActivity extends BaseActivity
                         @Override
                         public void onAnimationEnd(Animator animation) {
                             relativeLayout_navi.setVisibility(View.GONE);
-                            touchPadview.setVisibility(View.GONE);
+                            relativeLayout_touchpad.setVisibility(View.GONE);
                             relativeLayout_msg.setVisibility(View.GONE);
                             relativeLayout_num.setTranslationX(0);
                             relativeLayout_num.setVisibility(View.VISIBLE);
@@ -369,14 +385,14 @@ public class TvRemoteActivity extends BaseActivity
                             relativeLayout_num.setVisibility(View.GONE);
                             relativeLayout_navi.setVisibility(View.GONE);
                             relativeLayout_msg.setVisibility(View.GONE);
-                            touchPadview.setTranslationX(0);
-                            touchPadview.setVisibility(View.VISIBLE);
-                            curIndex = touchPadview.getId();
+                            relativeLayout_touchpad.setTranslationX(0);
+                            relativeLayout_touchpad.setVisibility(View.VISIBLE);
+                            curIndex = relativeLayout_touchpad.getId();
                         }
                     })
                     .start();
-        }else if (curIndex == touchPadview.getId()) {
-            touchPadview.animate()
+        }else if (curIndex == relativeLayout_touchpad.getId()) {
+            relativeLayout_touchpad.animate()
                     .translationX(-Utils.getScreenWidth(this))
                     .setDuration(300)
                     .setInterpolator(new AccelerateInterpolator())
@@ -384,7 +400,7 @@ public class TvRemoteActivity extends BaseActivity
                         @Override
                         public void onAnimationEnd(Animator animation) {
                             relativeLayout_num.setVisibility(View.GONE);
-                            touchPadview.setVisibility(View.GONE);
+                            relativeLayout_touchpad.setVisibility(View.GONE);
                             relativeLayout_navi.setVisibility(View.GONE);
                             relativeLayout_msg.setTranslationX(0);
                             relativeLayout_msg.setVisibility(View.VISIBLE);
@@ -401,7 +417,7 @@ public class TvRemoteActivity extends BaseActivity
                         @Override
                         public void onAnimationEnd(Animator animation) {
                             relativeLayout_msg.setVisibility(View.GONE);
-                            touchPadview.setVisibility(View.GONE);
+                            relativeLayout_touchpad.setVisibility(View.GONE);
                             relativeLayout_num.setVisibility(View.GONE);
                             relativeLayout_navi.setTranslationX(0);
                             relativeLayout_navi.setVisibility(View.VISIBLE);
@@ -423,7 +439,7 @@ public class TvRemoteActivity extends BaseActivity
                             @Override
                             public void onAnimationEnd(Animator animation) {
                                 relativeLayout_navi.setVisibility(View.GONE);
-                                touchPadview.setVisibility(View.GONE);
+                                relativeLayout_touchpad.setVisibility(View.GONE);
                                 relativeLayout_msg.setVisibility(View.GONE);
                                 relativeLayout_num.setTranslationX(0);
                                 relativeLayout_num.setVisibility(View.VISIBLE);
@@ -442,14 +458,14 @@ public class TvRemoteActivity extends BaseActivity
                                 relativeLayout_num.setVisibility(View.GONE);
                                 relativeLayout_navi.setVisibility(View.GONE);
                                 relativeLayout_msg.setVisibility(View.GONE);
-                                touchPadview.setTranslationX(0);
-                                touchPadview.setVisibility(View.VISIBLE);
-                                curIndex = touchPadview.getId();
+                                relativeLayout_touchpad.setTranslationX(0);
+                                relativeLayout_touchpad.setVisibility(View.VISIBLE);
+                                curIndex = relativeLayout_touchpad.getId();
                             }
                         })
                         .start();
-            }else if (curIndex == touchPadview.getId()) {
-                touchPadview.animate()
+            }else if (curIndex == relativeLayout_touchpad.getId()) {
+                relativeLayout_touchpad.animate()
                         .translationX(Utils.getScreenWidth(this))
                         .setDuration(300)
                         .setInterpolator(new AccelerateInterpolator())
@@ -457,7 +473,7 @@ public class TvRemoteActivity extends BaseActivity
                             @Override
                             public void onAnimationEnd(Animator animation) {
                                 relativeLayout_num.setVisibility(View.GONE);
-                                touchPadview.setVisibility(View.GONE);
+                                relativeLayout_touchpad.setVisibility(View.GONE);
                                 relativeLayout_navi.setVisibility(View.GONE);
                                 relativeLayout_msg.setTranslationX(0);
                                 relativeLayout_msg.setVisibility(View.VISIBLE);
@@ -474,7 +490,7 @@ public class TvRemoteActivity extends BaseActivity
                             @Override
                             public void onAnimationEnd(Animator animation) {
                                 relativeLayout_num.setVisibility(View.GONE);
-                                touchPadview.setVisibility(View.GONE);
+                                relativeLayout_touchpad.setVisibility(View.GONE);
                                 relativeLayout_msg.setVisibility(View.GONE);
                                 relativeLayout_navi.setTranslationX(0);
                                 relativeLayout_navi.setVisibility(View.VISIBLE);
