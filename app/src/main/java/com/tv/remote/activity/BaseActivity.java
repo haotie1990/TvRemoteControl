@@ -21,6 +21,7 @@ import android.widget.Toast;
 import com.tv.remote.R;
 import com.tv.remote.app.AppContext;
 import com.tv.remote.net.NetUtils;
+import com.tv.remote.utils.ConfigConst;
 import com.tv.remote.utils.DrawerLayoutInstaller;
 import com.tv.remote.utils.Utils;
 import com.tv.remote.view.DeviceInfo;
@@ -44,9 +45,6 @@ public abstract class BaseActivity extends AppCompatActivity
 
     @InjectView(R.id.toolbar)
     Toolbar toolbar;
-
-    @InjectView(R.id.ibFindDevice)
-    ImageButton ibFindDevice;
 
     private DrawerLayout drawerLayout;
 
@@ -99,7 +97,7 @@ public abstract class BaseActivity extends AppCompatActivity
                 mDialog.show();
 
                 Message msg = netHandler.obtainMessage();
-                msg.what = 5;
+                msg.what = ConfigConst.MSG_CONNECTION_TIME_OUT;
                 netHandler.sendMessageDelayed(msg, 15000);
                 NetUtils.getInstance().init(netHandler);
             }
@@ -134,7 +132,7 @@ public abstract class BaseActivity extends AppCompatActivity
             mDialog.setMessage("正在连接TV");
             mDialog.show();
             NetUtils.getInstance().startFindDevices();
-            netHandler.sendEmptyMessageDelayed(5,15000);
+            netHandler.sendEmptyMessageDelayed(ConfigConst.MSG_CONNECTION_TIME_OUT,15000);
         }
     }
 
@@ -235,11 +233,11 @@ public abstract class BaseActivity extends AppCompatActivity
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-                case 0:
+                case ConfigConst.MSG_INIT_CONNECTION:
                     Toast.makeText(BaseActivity.this, "初始化完成，查找设备...",
                             Toast.LENGTH_SHORT).show();
                     break;
-                case 1:
+                case ConfigConst.MSG_FIND_OUT_DEVICE:
                     getDevices().addItem((DeviceInfo) msg.obj);
                     if (mDialog != null && mDialog.isShowing()) {
                         mDialog.setMessage("已经发现："+getDevices().getItemCount()+"设备");
@@ -248,19 +246,19 @@ public abstract class BaseActivity extends AppCompatActivity
                         removeMessages(5);
                     }
                     break;
-                case 2:
+                case ConfigConst.MSG_DISCONNECTION:
                     Toast.makeText(BaseActivity.this,"连接已经断开，App不可用。",
                             Toast.LENGTH_SHORT).show();
                     break;
-                case 3:
+                case ConfigConst.MSG_THERE_NO_CONNECTION_TO_DEVICE:
                     Toast.makeText(BaseActivity.this,"未连接到TV，App不可用。",
                             Toast.LENGTH_SHORT).show();
                     break;
-                case 4:
+                case ConfigConst.MSG_INVALIED_INPUT_TEXT:
                     Toast.makeText(BaseActivity.this,"输入无效，请重新输入！",
                             Toast.LENGTH_SHORT).show();
                     break;
-                case 5:
+                case ConfigConst.MSG_CONNECTION_TIME_OUT:
                     Toast.makeText(BaseActivity.this,"连接超时......",
                             Toast.LENGTH_SHORT).show();
                     if (mDialog != null && mDialog.isShowing()) {

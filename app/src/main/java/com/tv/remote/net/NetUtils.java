@@ -5,6 +5,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
+import com.tv.remote.utils.ConfigConst;
 import com.tv.remote.view.DeviceInfo;
 
 import java.io.ByteArrayInputStream;
@@ -137,7 +138,7 @@ public class NetUtils extends Handler{
 
         if (ipClient == null) {
             if (mHandler != null) {
-                mHandler.sendEmptyMessage(3);
+                mHandler.sendEmptyMessage(ConfigConst.MSG_DISCONNECTION);
             }
             return;
         }
@@ -158,7 +159,7 @@ public class NetUtils extends Handler{
 
         if (ipClient == null) {
             if (mHandler != null) {
-                mHandler.sendEmptyMessage(3);
+                mHandler.sendEmptyMessage(ConfigConst.MSG_DISCONNECTION);
             }
             return;
         }
@@ -191,7 +192,7 @@ public class NetUtils extends Handler{
 
         if (ipClient == null) {
             if (mHandler != null) {
-                mHandler.sendEmptyMessage(3);
+                mHandler.sendEmptyMessage(ConfigConst.MSG_DISCONNECTION);
             }
             return;
         }
@@ -199,7 +200,7 @@ public class NetUtils extends Handler{
         int length = msg.getBytes().length;
         if (length > DATE_SEGMENT_LENGTH ) {
             if (mHandler != null) {
-                mHandler.sendEmptyMessage(4);
+                mHandler.sendEmptyMessage(ConfigConst.MSG_INVALIED_INPUT_TEXT);
             }
             return;
         }
@@ -229,7 +230,7 @@ public class NetUtils extends Handler{
 
         if (ipClient == null) {
             if (mHandler != null) {
-                mHandler.sendEmptyMessage(3);
+                mHandler.sendEmptyMessage(ConfigConst.MSG_DISCONNECTION);
             }
             return;
         }
@@ -307,7 +308,7 @@ public class NetUtils extends Handler{
             String ip = datagramPacket.getAddress().getHostAddress();
             if (ipList != null && !ipList.contains(ip)) {
                 int length = datagramPacket.getLength() - PACKET_TITLE_LENGTH;
-                String deviceName = new String(buffer,8,length,"utf-8");
+                String deviceName = new String(buffer, DATA_SEGMENT_START_INDEX, length,"utf-8");
                 Log.i("gky","REVEIVE CONNECTION FROM "+deviceName+"["+ip+"]");
                 if (ipClient == null) {
                     ipClient = ip;
@@ -316,7 +317,7 @@ public class NetUtils extends Handler{
                 Message msg = mHandler.obtainMessage();
                 DeviceInfo deviceInfo = new DeviceInfo(ip, deviceName, true, ip.equals(ipClient));
                 msg.obj = deviceInfo;
-                msg.what = 1;
+                msg.what = ConfigConst.MSG_FIND_OUT_DEVICE;
                 if (mHandler != null) {
                     mHandler.sendMessage(msg);
                 }
