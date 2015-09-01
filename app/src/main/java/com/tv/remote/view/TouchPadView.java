@@ -102,9 +102,9 @@ public class TouchPadView extends View{
         Log.i("gky","space = "+space);
         if (space > 50) {
             if(space > 50 && space < 100) {
-                int location_x = (dstX * (int) (1920) / width);//(location[0] * 1920) / getWidth();
-                int location_y = (dstY * (int) (1080) / height);//(location[1] * 1080) / getHeight();
-                NetUtils.getInstance().sendVirtualMotionEvents(location_x, location_y, 0);
+                //int location_x = (dstX * (int) (1920) / width);//(location[0] * 1920) / getWidth();
+                //int location_y = (dstY * (int) (1080) / height);//(location[1] * 1080) / getHeight();
+                NetUtils.getInstance().sendVirtualMotionEvents(dstX, dstY, 0);
             }
             return new int[]{dstX, dstY};
         }
