@@ -1,0 +1,507 @@
+on early-init
+    export BOOTCLASSPATH /system/framework/core.jar:/system/framework/conscrypt.jar:/system/framework/okhttp.jar:/system/framework/core-junit.jar:/system/framework/bouncycastle.jar:/system/framework/ext.jar:/system/framework/framework.jar:/system/framework/framework2.jar:/system/framework/telephony-common.jar:/system/framework/voip-common.jar:/system/framework/mms-common.jar:/system/framework/android.policy.jar:/system/framework/services.jar:/system/framework/apache-xml.jar:/system/framework/webviewchromium.jar:/system/framework/com.mstar.android.jar:/system/framework/skyworthdigital.jar
+
+    mount debugfs debugfs /sys/kernel/debug
+
+on init
+    export BOOTCLASSPATH /system/framework/core.jar:/system/framework/conscrypt.jar:/system/framework/okhttp.jar:/system/framework/core-junit.jar:/system/framework/bouncycastle.jar:/system/framework/ext.jar:/system/framework/framework.jar:/system/framework/framework2.jar:/system/framework/telephony-common.jar:/system/framework/voip-common.jar:/system/framework/mms-common.jar:/system/framework/android.policy.jar:/system/framework/services.jar:/system/framework/apache-xml.jar:/system/framework/webviewchromium.jar:/system/framework/com.mstar.android.jar:/system/framework/skyworthdigital.jar
+
+     # See storage config details at http://source.android.com/tech/storage/
+    mkdir /mnt/shell/emulated 0700 shell shell
+    mkdir /storage/emulated 0555 root root
+
+    export EXTERNAL_STORAGE /storage/emulated/legacy
+    export EMULATED_STORAGE_SOURCE /mnt/shell/emulated
+    export EMULATED_STORAGE_TARGET /storage/emulated
+
+    # Support legacy paths
+    symlink /storage/emulated/legacy /sdcard
+    symlink /storage/emulated/legacy /mnt/sdcard
+    symlink /storage/emulated/legacy /storage/sdcard0
+    symlink /mnt/shell/emulated/0 /storage/emulated/legacy
+
+    # usb/iso/samba mount point
+    mkdir /mnt/usb 0775 root system
+    mkdir /mnt/iso 0775 root system
+    mkdir /mnt/samba 0775 root system
+    mount tmpfs tmpfs /mnt/usb mode=0755,gid=1000
+    mount tmpfs tmpfs /mnt/iso mode=0755,gid=1000
+    mount tmpfs tmpfs /mnt/samba mode=0755,gid=1000
+
+    # cache/log/temp... mount point
+    mkdir /var 0775 system system
+    mount tmpfs tmpfs /var mode=0775,gid=1000
+
+    # create /tmp point to /var/tmp
+    mkdir /var/tmp 0775 system system
+    symlink /var/tmp /tmp
+
+    # create /var/tmp/media for camera/ve/dwin
+    mkdir /var/tmp/media 0775 media media
+    mkdir /var/tmp/hwc 0775 system system
+    mkdir /var/tmp/providers.media 0775 system sdcard_rw
+
+    # create tv related folders
+    symlink /tvservice/std_lib/lib /lib
+    mkdir /vendor
+    mkdir /system/vendor
+    mkdir /system/vendor/app
+    symlink /system/vendor/app /vendor/app
+    symlink /tvservice/mslib /mslib
+    symlink /tvservice/applications /applications
+    symlink /tvconfig/config /config
+    symlink /tvconfig/config/certificate /certificate
+    symlink /tvcustomer/dtv /dtv
+    symlink /tvdatabase/Database /Database
+    symlink /tvdatabase/DatabaseBackup /DatabaseBackup
+    symlink /tvcustomer/Customer /Customer
+
+on fs
+    write /proc/sys/vm/page-cluster 0
+    mkdir /tvservice
+    mkdir /tvconfig
+    mkdir /tvdatabase
+    mkdir /tvcustomer
+    mkdir /skydir
+    mkdir /skyota
+    mkdir /skythird
+    mount_all /fstab.sky_6a628
+    mkdir /tvcustomer/dtv 0777 system system
+    swapon_all /fstab.sky_6a628
+
+on post-fs
+    # insert mali driver
+    insmod /system/lib/modules/ump.ko
+    insmod /system/lib/modules/mali.ko
+    # insert ir driver
+    insmod /system/lib/modules/rc-keymap-tv.ko
+    insmod /system/lib/modules/mdrv-software-ir.ko
+    insmod /system/lib/modules/mdrv-ir.ko
+    # insert cywee virtual sensor driver
+    #insmod /system/lib/modules/cywee_virtual.ko
+	# insert fusion
+    insmod /system/lib/modules/fusion.ko
+
+    # enable some utopia driver interrupt, ex: dip
+    chmod 777 /proc/irq/238
+    chmod 777 /proc/irq/238/affinity_hint
+    chmod 777 /proc/irq/238/irq
+    chmod 777 /proc/irq/238/node
+    chmod 777 /proc/irq/238/smp_affinity
+    chmod 777 /proc/irq/238/spurious
+    # enable some utopia driver interrupt, ex: mfe
+    chmod 777 /proc/irq/217
+    chmod 777 /proc/irq/217/affinity_hint
+    chmod 777 /proc/irq/217/irq
+    chmod 777 /proc/irq/217/node
+    chmod 777 /proc/irq/217/smp_affinity
+    chmod 777 /proc/irq/217/spurious
+
+on post-fs-data
+    mkdir /data/misc/wifi 0770 wifi wifi
+    mkdir /data/misc/wifi/sockets 0770 wifi wifi
+    mkdir /data/misc/dhcp 0770 dhcp dhcp
+    chown dhcp dhcp /data/misc/dhcp
+    mkdir /data/system 0771 system system
+    mkdir /data/system/wpa_supplicant 0770 wifi wifi
+	mkdir /data/sdcard 0777 system system
+    mkdir /data/log 0771 system system
+    # pppoe.conf/resolv.conf for read-write
+    mkdir /data/misc/ppp 0777 system system
+    # make directory for skyworth app
+    chown system system /skydir
+    chmod 0777 /skydir
+    symlink /skydir /data/skydir
+    chown system system /skyota
+    chmod 0777 /skyota    
+    symlink /mnt/sdcard/ni /data/ni
+    symlink /mnt/sdcard/primesense /data/primesense
+    #symlink /skydir/idong /data/idong
+    chmod 0777 /data/local
+    chown system system /data/flash
+    chmod 0777 /data/flash
+    chmod 0777 /data/flash/skydb.db
+    chmod 0777 /data/flash/skydigitalenable
+	
+    # /data/media is used as the SD card
+    mkdir /data/sdcard 0770 media_rw media_rw
+	
+on boot
+    # create the coredump file
+    write /proc/sys/kernel/core_pattern /var/coredump.%p.gz
+    # enable KSM
+    write /sys/kernel/mm/ksm/pages_to_scan 100
+    write /sys/kernel/mm/ksm/sleep_millisecs 500
+    write /sys/kernel/mm/ksm/run 1
+	
+	#create sdcard files
+	mkdir /data/sdcard/Download 0777 system system
+	mkdir /data/sdcard/Alarms 0777 system system
+	mkdir /data/sdcard/DCIM 0777 system system
+	mkdir /data/sdcard/Movies 0777 system system
+	mkdir /data/sdcard/Music 0777 system system
+	mkdir /data/sdcard/Notifications 0777 system system
+	mkdir /data/sdcard/Pictures 0777 system system
+	mkdir /data/sdcard/Podcasts 0777 system system
+	mkdir /data/sdcard/Ringtones 0777 system system
+	
+	
+    # ntfs driver
+    insmod /system/lib/modules/ntfs-3g.ko
+	
+# after launcher is displayed, trigger usb and other related drivers initialization
+on property:init.svc.bootanim=stopped
+    start tvservice_add
+    # js
+    insmod /system/lib/modules/jstouch.ko
+    insmod /system/lib/modules/rtkm.ko 
+    chmod 0666 /dev/jstouch-screen
+    chmod 0755 /dev/input
+	#add by gengkaiyang
+	chmod 0777 /dev/input/event7
+    
+#    chmod 0777 /system/bin/SkyScreenServer
+    # insert usb driver
+    insmod /system/lib/modules/usb-storage.ko
+    insmod /system/lib/modules/ehci-hcd.ko
+#skydir 777
+    chmod  0777 /system/bin/skyworth_sh.sh
+	
+    chmod 0777 /system/bin/skysudo
+    chmod 777 /tvdatabase/Database/factorysetup.db-journal
+    chmod 777 /tvdatabase/Database/factorysetup.db
+    chmod  0777  /skydir/database
+    chmod  0777  /skydir/database/website.db
+    chmod  0777  /skydir/database/player.db
+    chmod  0777  /skydir/plugins
+    chmod  0777  /skydir/plugins/AudioUrlSnifferPlugin.jar
+    chmod  0777  /skydir/plugins/NTVplugin.jar
+    chmod  0777  /skydir/plugins/TVplugin.jar
+    chmod  0777  /skydir/plugins/VideoUrlSnifferPlugin.jar
+    chmod  0777  /skydir/plugins/configPlugIn.jar
+	
+    # insert bluetooth driver
+    insmod /system/lib/modules/uhid.ko
+    insmod /system/lib/modules/bluetooth.ko
+    insmod /system/lib/modules/l2cap.ko
+    insmod /system/lib/modules/hidp.ko
+    insmod /system/lib/modules/rfcomm.ko
+    insmod /system/lib/modules/bnep.ko
+    setprop mstar.usb.init 1
+	setprop net.wfd.enable 0
+
+	start adbd
+    start hillcrestserver
+    start skysudo
+    start skyworth-sh
+    start xcmidware
+    start VirtualEvent
+	start cywee_sensor
+	start virtualkepad
+	start browserservice
+	
+	#ump pre-allocate by matthew.zou
+    start umppreallocate
+	
+on property:mstar.sky.adbdenable=1
+    start adbd
+
+on property:mstar.sky.adbdenable=0
+    stop adbd  
+    
+on property:third.get.ir=1
+	start disable_tvosIR
+#to stop bootanim,when tv set 	third.get.AD=1
+#on property:third.get.AD=1
+#	stop bootanim
+	
+# service for sd card access
+service fuse_sdcard0 /system/bin/sdcard -u 1023 -g 1023 -d /data/sdcard /mnt/shell/emulated
+   class main
+	
+# service for common wifi
+service loadwifi /system/bin/wifi_load_driver
+    class main
+    disabled
+    oneshot
+
+service unloadwifi /system/bin/wifi_unload_driver
+    class main
+    disabled
+    oneshot
+
+service loadapwifi /system/bin/wifi_load_apdriver
+    class main
+    disabled
+    oneshot
+
+service unloadapwifi /system/bin/wifi_unload_apdriver
+    class main
+    disabled
+    oneshot
+
+service startSuppl /system/bin/startSupplicant
+    class main
+    disabled
+    oneshot
+
+# service for virtual keypad
+#service virtualkepad /system/bin/sky_virtualkeypad
+#    class main
+#    oneshot
+#	disabled
+	
+#service SkyScreenServer /system/bin/SkyScreenServer
+#	class main
+#	user root
+
+# service for atheros widi
+service atheros_widi /system/bin/ath9375_supplicant -Dnl80211 -iwlan0 -c/system/etc/wifi/wps_sta_widi.conf -N -Dnl80211 -ip2p0 -c/system/etc/wifi/p2pdev.conf -B
+    class main
+    disabled
+    oneshot
+
+# service for realtek widi
+service widi_supplicant /system/bin/rel_supplicant -Dnl80211 -iwlan0 -c /data/misc/wifi/wpa_supplicant.conf
+    class main
+    disabled
+    oneshot
+
+# services for intel widi
+service loadwidi /system/bin/widi_load_driver
+    class main
+    disabled
+    oneshot
+service unloadwidi /system/bin/widi_unload_driver
+    class main
+    disabled
+    oneshot
+service dhcpcd_release /system/bin/dhcp_release
+    class main
+    disabled
+    oneshot
+service dhcpcd_ra0 /system/bin/dhcpcd -ABKL
+    class main
+    disabled
+    oneshot
+service dhcpcd_p2p0 /system/bin/dhcpcd -ABKL
+    class main
+    disabled
+    oneshot
+
+service dhcpcd_wlan0 /system/bin/dhcpcd -ABKL
+    class main
+    disabled
+    oneshot
+
+service dhcpcd_bnep0 /system/bin/dhcpcd -ABKL
+    class main
+    disabled
+    oneshot
+
+service dhcpcd_p2p /system/bin/dhcpcd -ABKL
+    class main
+    disabled
+    oneshot
+
+service dhcpcd_eth0 /system/bin/dhcpcd -dBKL eth0
+    class main
+    group system dhcp
+    disabled
+    oneshot
+
+service iprenew_wlan0 /system/bin/dhcpcd -n
+    class main
+    disabled
+    oneshot
+
+service iprenew_p2p /system/bin/dhcpcd -n
+    class main
+    disabled
+    oneshot
+
+service iprenew_bnep0 /system/bin/dhcpcd -n
+    class main
+    disabled
+    oneshot
+
+# service for miracast
+service get_offer_ip /system/bin/GetdnsmasqIp
+    class main
+    disabled
+    oneshot
+service set_rx_buf /system/bin/Setrxbuffer
+    class main
+    disabled
+    oneshot
+
+# mdnsd service for mcast
+service mdnsd /system/bin/mdnsd
+    class main
+    disabled
+    oneshot
+
+# service for tv
+service tvservice /system/bin/logwrapper -e /applications/bin/tvos
+    setenv LD_LIBRARY_PATH /applications/bin:/mslib:/mslib/utopia:/config
+    class main
+    oneshot
+
+# unmute tv after bootanim stop
+service tvservice_add /system/bin/tvosAddition
+    class main
+	user system
+	group system
+    disabled
+    oneshot
+	
+service dtvloaderserver /system/bin/dtvloaderserver
+    class main
+    user root
+
+# services for pppoe
+service pppoe-setup /system/bin/pppoe-setup
+    class main
+    disabled
+    oneshot
+service pppoe-start /system/bin/pppoe-start
+    class main
+    disabled
+    oneshot
+service pppoe-status /system/bin/pppoe-status
+    class main
+    disabled
+    oneshot
+service pppoe-stop /system/bin/pppoe-stop
+    class main
+    disabled
+    oneshot
+
+# service for virtual keypad
+service virtualkeypad /system/bin/virtualkeypad
+    class main
+    oneshot
+
+# services for BABAO turnkey
+service virtualdevice /system/bin/upnp_tv_receiver --web-root /system/etc/upnp/web/ --max-x 1920 --max-y 1080
+    class main
+    oneshot
+#service livecap /system/bin/livecap
+#    class main
+#    oneshot
+#service virtualtouch /system/bin/virtualtouch
+#    class main
+#    oneshot
+
+# service for browser
+service browserserver /system/bin/browserserver
+    class main
+    user system
+    group input
+    oneshot
+
+# service for eth0 multicast
+service multicast /system/bin/busybox ifconfig eth0 allmulti
+    class main
+    oneshot
+
+# service for resourcemanager
+service resourcemanager /system/bin/resourcemanager
+    class core
+    user system
+    group system
+
+# service for DVFS
+service dvfsscaling /system/bin/sh /system/etc/dvfs_scaling.sh
+    user root
+    group system
+    disabled
+    oneshot
+
+# service for cywee virtual sensor
+#service cywee_sensor /system/bin/virtualsensor
+#    class main
+#    user root
+#    group root system input
+
+# bluetooth load driver
+service loadbt /system/bin/loadbt
+    class main
+    disabled
+    oneshot
+    console
+# bluetooth unload driver
+service unloadbt /system/bin/unloadbt
+    class main
+    disabled
+    oneshot
+    console
+# broadcom kill bluetooth service
+service kbtapk /system/bin/sh system/bin/kill_btapk.sh
+    user root
+    group system bluetooth
+    disabled
+    oneshot
+# mtkbt
+service mtkbt system/bin/mtkbt
+    class main
+    disabled
+    oneshot
+    console
+
+# service for Linux DNS
+service nameserver /system/bin/sh /system/etc/nameserver.sh
+    user root
+    group system
+    disabled
+    #for skyworth.sh
+service skyworth-sh /system/bin/sh /system/bin/skyworth_sh.sh
+    class main
+    oneshot  
+    disabled
+    oneshot
+service skysudo /system/bin/skysudo
+	class main
+    disabled
+    oneshot
+#for deservice	
+service xcmidware /system/bin/xcmidware
+	class main
+	user root
+	group root system input
+		
+service VirtualEvent /system/bin/VirtualEvent
+	class main
+	user root
+	group root system input
+service getlogservice /system/bin/logcat -v time -f /data/log.txt
+	class main
+	disabled
+	oneshot
+	
+service getloginfo /system/bin/sh /skydir/getlog.sh
+    class main     
+    oneshot
+
+service toltech_devices /system/bin/init.toltech.sh
+    class main
+    oneshot
+# Freespace Motion daemon
+service hillcrestserver /system/bin/motiond -b linear -o rel -S /system/lib/NanoSiC_Skyworth_BMI.bin
+    class late_start
+    user root
+    disabled
+    oneshot
+	
+# open logcat offline log 
+service logcat /system/bin/logcat -b system -b events -b main -k -r 1000 -n 10 -v threadtime -f /data/log/logcat.log 
+   class main 
+   user system 
+   group system
+
+#ump pre-allocate by matthew.zou
+service umppreallocate /system/bin/sh /system/bin/ump_pre_allocate_mem.sh
+    class main
+	disabled
+    oneshot
+	console
