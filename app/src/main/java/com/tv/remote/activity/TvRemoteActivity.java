@@ -223,7 +223,7 @@ public class TvRemoteActivity extends BaseActivity
     @OnClick(R.id.btn_exit)
     public void onClickExit() {
         vibrator.vibrate(100);
-        NetUtils.getInstance().sendKey(-1);
+        NetUtils.getInstance().sendKey(KeyEvent.KEYCODE_ESCAPE);
     }
 
     @OnClick(R.id.btn_ok)
