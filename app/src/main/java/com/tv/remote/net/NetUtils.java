@@ -251,7 +251,7 @@ public class NetUtils extends Handler{
         buffer[14] = Integer.valueOf((dstY >> 16) & 0xFF).byteValue();
         buffer[15] = Integer.valueOf((dstY >> 24) & 0xFF).byteValue();
 
-        buffer[15] = Integer.valueOf(type & 0xFF).byteValue();
+        buffer[16] = Integer.valueOf(type & 0xFF).byteValue();
 
         int packetLength = PACKET_TITLE_LENGTH + 12;
         Log.i("gky","make virtual mouse("+dstX+","+dstY+")");
