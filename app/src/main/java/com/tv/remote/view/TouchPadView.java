@@ -66,7 +66,6 @@ public class TouchPadView extends View{
         lastX = width/2;
         lastY = height/2;
 
-        Log.i("gky", "width = " + width + "height = " + height);
         setMeasuredDimension(width,height);
     }
 
@@ -78,8 +77,6 @@ public class TouchPadView extends View{
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_MOVE) {
-            Log.i("gky", "width = " + getWidth() + "height = " + getHeight());
-            Log.i("gky","lastX = "+lastX+"lastY ="+lastY+"X ="+(int)event.getX()+"Y ="+(int)event.getY());
             int[] location = getSpace(lastX, lastY, (int)event.getX(),  (int)event.getY());
             if (location != null) {
                 lastX = (int) event.getX();
@@ -99,11 +96,8 @@ public class TouchPadView extends View{
         int dstX = pX - x;
         int dstY = pY - y;
         int space = (int) Math.sqrt((w*w+h*h));
-        Log.i("gky","space = "+space);
         if (space > 50) {
             if(space > 50 && space < 100) {
-                //int location_x = (dstX * (int) (1920) / width);//(location[0] * 1920) / getWidth();
-                //int location_y = (dstY * (int) (1080) / height);//(location[1] * 1080) / getHeight();
                 NetUtils.getInstance().sendVirtualMotionEvents(dstX, dstY, 0);
             }
             return new int[]{dstX, dstY};
