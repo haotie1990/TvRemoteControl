@@ -1,30 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.tv.remote.service"
-    android:sharedUserId ="android.uid.system" >
+    android:sharedUserId="android.uid.system" >
 
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
+        android:name=".TvRemoteServiceApp"
         android:allowBackup="true"
+        android:persistent="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:theme="@android:style/Theme.Black.NoTitleBar" >
-        <service
-            android:name=".TvRemoteService" >
+        <service android:name=".TvRemoteService" >
             <intent-filter>
-                <action android:name="com.tv.remote.service"/>
+                <action android:name="com.tv.remote.service" />
             </intent-filter>
         </service>
 
         <receiver
             android:name=".TvRemoteReceiver"
-            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED" >
             <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="com.tv.remote.service.destroy"/>
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </receiver>
+
+        <activity
+            android:name=".TvRemoteActivity"
+            android:label="@string/title_activity_tv_remote"
+            android:enabled="true">
+            <intent-filter android:priority="1000">
+                <action android:name="ANDROID.INTENT.ACTION.MAIN"/>
+                <category android:name="ANDROID.INTENT.CATEGORY.LAUNCHER"/>
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>
