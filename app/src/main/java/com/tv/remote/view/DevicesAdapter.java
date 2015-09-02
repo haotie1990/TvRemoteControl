@@ -1,6 +1,7 @@
 package com.tv.remote.view;
 
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -50,14 +51,36 @@ public class DevicesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     }
 
     public void addItem(DeviceInfo deviceInfo) {
-        mDevices.add(deviceInfo);
-        notifyItemInserted(mDevices.size() - 1);
+        if (!mDevices.contains(deviceInfo)) {
+            mDevices.add(deviceInfo);
+            notifyItemInserted(mDevices.size() - 1);
+        }else {
+            Log.e("gky","invalid device "+deviceInfo.name+"["+deviceInfo.ip+"]");
+        }
     }
 
-    public void removeItem(DeviceInfo deviceInfo) {
+    public DeviceInfo removeItem(DeviceInfo deviceInfo) {
         int position = mDevices.indexOf(deviceInfo);
-        mDevices.remove(deviceInfo);
-        notifyItemRemoved(position);
+        if (position != -1) {
+            mDevices.remove(deviceInfo);
+            notifyItemRemoved(position);
+            return deviceInfo;
+        }
+        return null;
+    }
+
+    public DeviceInfo removeItem(String ip) {
+        DeviceInfo devInfo = null;
+        for (DeviceInfo deviceInfo : mDevices) {
+            if (deviceInfo.ip.equals(ip)) {
+                devInfo = deviceInfo;
+                break;
+            }
+        }
+        if (devInfo != null) {
+            return removeItem(devInfo);
+        }
+        return null;
     }
 
     public void setOnItemClickListener(OnItemClickListener onItemClickListener) {

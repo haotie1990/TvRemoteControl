@@ -232,7 +232,8 @@ public abstract class BaseActivity extends AppCompatActivity
 
         @Override
         public void handleMessage(Message msg) {
-            switch (msg.what) {
+            int msgWhat = msg.what & 0xFF;
+            switch (msgWhat) {
                 case ConfigConst.MSG_INIT_CONNECTION:
                     Toast.makeText(BaseActivity.this, "初始化完成，查找设备...",
                             Toast.LENGTH_SHORT).show();
@@ -265,6 +266,14 @@ public abstract class BaseActivity extends AppCompatActivity
                         mDialog.dismiss();
                     }
                     NetUtils.getInstance().stopInitClient();
+                    break;
+                case ConfigConst.MSG_DEVICE_DISCONNECTION:
+                    String ip = (String) msg.obj;
+                    DeviceInfo deviceInfo = getDevices().removeItem(ip);
+                    if (deviceInfo != null) {
+                        Toast.makeText(BaseActivity.this,"设备："+deviceInfo.name+"["+deviceInfo.ip+"] 离线。",
+                                Toast.LENGTH_SHORT).show();
+                    }
                     break;
             }
         }

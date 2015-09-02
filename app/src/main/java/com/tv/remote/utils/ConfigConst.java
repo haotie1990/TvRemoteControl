@@ -17,4 +17,6 @@ public class ConfigConst {
 
     public static final int MSG_CONNECTION_TIME_OUT = 5;
 
+    public static final int MSG_DEVICE_DISCONNECTION = 6;
+
 }
