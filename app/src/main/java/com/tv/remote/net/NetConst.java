@@ -5,6 +5,12 @@ package com.tv.remote.net;
  */
 public class NetConst {
 
+    public static final int FLAG_LONG_PRESS_DISENABLE = 0x02;
+
+    public static final int FLAG_LONG_PRESS_ENABLE = 0x01;
+
+    public static final int FLAG_LONG_PRESS = 0x00;
+
     public static final int STTP_LOAD_TYPE_IR_KEY = 51;
 
     public static final int STTP_LOAD_TYPE_BROADCAST = 52;
@@ -14,6 +20,12 @@ public class NetConst {
     public static final int STTP_LOAD_TYPE_CMD_REVEIVE = 54;
 
     public static final int STTP_LOAD_TYPE_CMD_VIRTUAL_MOUSE = 55;
+
+    public static final int STTP_LOAD_TYPE_CMD_FILE = 56;
+
+    public static final int STTP_LOAD_TYPE_CMD_VIDEO = 57;
+
+    public static final int STTP_LOAD_TYPE_CMD_MUSIC = 58;
 
     /*54~72预留添加更多的命令*/
 
