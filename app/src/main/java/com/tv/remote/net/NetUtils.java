@@ -293,7 +293,7 @@ public class NetUtils extends Handler{
         int randomKey = buffer[4] & 0xFF;
 
         if (suspendMap.size() != 0) {
-            if (suspendMap.containsKey(randomKey)) {
+            if (suspendMap.containsKey(randomKey) && deviceId == 55) {
 
                 BufferInfo info = suspendMap.get(randomKey);
                 int type = info.buffer[1] & 0x7F;
