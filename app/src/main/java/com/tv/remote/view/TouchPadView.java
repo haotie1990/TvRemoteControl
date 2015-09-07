@@ -22,11 +22,11 @@ public class TouchPadView extends View{
     private Paint mPaint;
     private Bitmap mBitmap;
 
-    private int width;
-    private int height;
+    //private int width = getWidth();
+    //private int height = getHeight();
 
-    private int lastX;
-    private int lastY;
+    private int lastX = getWidth();
+    private int lastY = getHeight();
 
     public TouchPadView(Context context) {
         this(context, null);
@@ -56,6 +56,7 @@ public class TouchPadView extends View{
 
     }
 
+    /*
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int widthSize = MeasureSpec.getSize(widthMeasureSpec);
@@ -68,7 +69,7 @@ public class TouchPadView extends View{
 
         setMeasuredDimension(width,height);
     }
-
+    */
     @Override
     protected void onDraw(Canvas canvas) {
         canvas.drawBitmap(mBitmap, lastX, lastY, mPaint);
@@ -88,7 +89,7 @@ public class TouchPadView extends View{
     }
 
     private int[] getSpace(int x, int y, int pX, int pY) {
-        if (pX < 0 || pX > width|| pY < 0 || pY > height) {
+        if (pX < 0 || pX > getWidth()|| pY < 0 || pY > getHeight()) {
             return  null;
         }
         int w = Math.abs(pX - x);
