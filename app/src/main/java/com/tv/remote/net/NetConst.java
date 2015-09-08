@@ -9,7 +9,7 @@ public class NetConst {
 
     public static final int FLAG_LONG_PRESS_ENABLE = 0x01;
 
-    public static final int FLAG_LONG_PRESS = 0x00;
+    public static final int FLAG_NORMAL_PRESS = 0x00;
 
     public static final int STTP_LOAD_TYPE_IR_KEY = 51;
 

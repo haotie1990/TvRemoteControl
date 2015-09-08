@@ -13,6 +13,8 @@ import android.view.KeyEvent;
 import com.android.internal.view.IInputMethodManager;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
@@ -20,6 +22,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.util.EventListener;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -42,6 +45,12 @@ public class NetUtils {
 
     public static final int STTP_LOAD_TYPE_CMD_VIRTUAL_MOUSE = 55;
 
+    public static final int STTP_LOAD_TYPE_CMD_FILE = 56;
+
+    public static final int STTP_LOAD_TYPE_CMD_VIDEO = 57;
+
+    public static final int STTP_LOAD_TYPE_CMD_MUSIC = 58;
+
     /*54~72预留添加更多的命令*/
 
     public static final int STTP_LOAD_TYPE_CMD_XXX = 73;
@@ -60,7 +69,9 @@ public class NetUtils {
 
     public static final int NEED_REPLY = 1;
 
-    private static final int PACKET_TITLE_LENGTH = 8;
+    private static final int DATA_PACKET_TITLE_SIZE = 8;
+    private static final int DATA_PACKET_SIZE = 1400;
+    private static final int DATA_PACKET_BODY_INDEX = 8;
 
     private static NetUtils instance = null;
 
@@ -130,7 +141,7 @@ public class NetUtils {
             return;
         }
 
-        SendRunnale sendRunnale = new SendRunnale(bf, PACKET_TITLE_LENGTH + length, dstIp);
+        SendRunnale sendRunnale = new SendRunnale(bf, DATA_PACKET_TITLE_SIZE + length, dstIp);
         mPool.submit(sendRunnale);
     }
 
@@ -166,7 +177,7 @@ public class NetUtils {
                 + "] load_type[" + load_type + "] SN[" + sn + "] receive_flag[" + receive_flag + "]");
 
         if (receive_flag == NEED_REPLY) {
-            send(buffer, datagramPacket.getLength() - PACKET_TITLE_LENGTH,
+            send(buffer, datagramPacket.getLength() - DATA_PACKET_TITLE_SIZE,
                     datagramPacket.getAddress().getHostAddress());
         }
 
@@ -197,7 +208,7 @@ public class NetUtils {
         } else if (load_type == STTP_LOAD_TYPE_BROADCAST && deviceId == 55) {
             try {
                 String ip = datagramPacket.getAddress().getHostAddress();
-                int dataLength = datagramPacket.getLength() - PACKET_TITLE_LENGTH;
+                int dataLength = datagramPacket.getLength() - DATA_PACKET_TITLE_SIZE;
                 String deviceName = new String(buffer, 8, dataLength, "utf-8");
                 if (ipDevMap != null && !ipDevMap.containsKey(ip)) {
                     if (!deviceName.equals("")) {
@@ -223,7 +234,7 @@ public class NetUtils {
             }
         } else if (load_type == STTP_LOAD_TYPE_CMD_INPUT_TEXT) {
             try {
-                int length = datagramPacket.getLength() - PACKET_TITLE_LENGTH;
+                int length = datagramPacket.getLength() - DATA_PACKET_TITLE_SIZE;
                 String text = new String(buffer, 8, length, "utf-8");
                 Log.i("gky", "receive Message text:" + text);
 
@@ -450,6 +461,67 @@ public class NetUtils {
                     Runtime.getRuntime().exec(event);
                 }
             } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private class ReceiveFileRunnable implements Runnable{
+
+        private DatagramSocket mSSocket;
+        private DatagramSocket mRSocket;
+
+        private String fileName;
+
+        public ReceiveFileRunnable(String fileName) {
+        }
+
+        @Override
+        public void run() {
+
+            try {
+                mSSocket = new DatagramSocket();
+
+                mRSocket = new DatagramSocket(null);
+                mRSocket.setReuseAddress(true);
+                mRSocket.bind(new InetSocketAddress(5557));
+
+                byte[] data = new byte[DATA_PACKET_SIZE];
+                DatagramPacket receivePacket = new DatagramPacket(data, data.length);
+
+                int length;
+                int receiveSn;
+                int SN = 1;
+                File file = new File(fileName);
+                FileOutputStream fileOutputStream = new FileOutputStream(file);
+                while (true) {
+                    mRSocket.receive(receivePacket);
+                    length = receivePacket.getLength() - DATA_PACKET_TITLE_SIZE;
+                    if (length > 0) {
+                        receiveSn = (data[2] & 0xFF) | ((data[3] & 0xFF) << 8);
+                        if (receiveSn == SN) {
+                            fileOutputStream.write(data, DATA_PACKET_BODY_INDEX, length);
+                            SN++;
+
+                            DatagramPacket sendPacket = new DatagramPacket(data,receivePacket.getLength(),
+                                    InetAddress.getByName(ipClient),5558);
+                            mSSocket.send(sendPacket);
+                        }else if (receiveSn < SN) {
+                            DatagramPacket sendPacket = new DatagramPacket(data,receivePacket.getLength(),
+                                    InetAddress.getByName(ipClient),5558);
+                            mSSocket.send(sendPacket);
+                        }
+                    }else {
+                        break;
+                    }
+
+                }
+                fileOutputStream.close();
+                mSSocket.close();
+                mRSocket.close();
+            } catch (SocketException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }

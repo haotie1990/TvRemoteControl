@@ -9,6 +9,8 @@ import com.tv.remote.utils.ConfigConst;
 import com.tv.remote.view.DeviceInfo;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
@@ -34,33 +36,35 @@ public class NetUtils extends Handler{
     private ExecutorService mPool;
 
     private volatile String ipClient = null;
-    private List<String> ipList;
-
-    private volatile boolean isLongKeyFlag = false;
+    private volatile List<String> ipList;
 
     private DatagramSocket initClientSocket = null;
     private ReceiveRunnale receiveRunnale = null;
     private InitGetClient initGetClient = null;
 
-    private static final int PACKET_TITLE_LENGTH = 8;
+    private static final int DATA_PACKET_TITLE_SIZE = 8;
+    private static final int DATA_PACKET_SIZE = 1400;
     private static final int DATA_SEGMENT_START_INDEX = 8;
     private static final int DATE_SEGMENT_LENGTH = 1392;
 
-    private static final int WAIT_RESPONSE_STATE = 0xFF;
-    private static final int WAIT_CHECKOUT_DEVICE_STATUS_REMOTE = 0xA0;
-    private static final int WAIT_CHECKOUT_DEVICE_STATUS_LOCAL = 0xB0;
+    private static final int WHAT_RESPONSE_STATE = 0xFF;
+    private static final int WHAT_CHECKOUT_DEVICE_STATUS_REMOTE = 0xA0;
+    private static final int WHAT_CHECKOUT_DEVICE_STATUS_LOCAL = 0xB0;
 
     private static final int DELAY_CHECKOUT_TIME = 10 * 1000;
 
-    private int randomCount = 0;
-    private Map<Integer, BufferInfo> suspendMap;
+    private static final int DEVICE_TYPE_PHONE = 55;
+    private static final int DEVICE_TYPE_TV = 56;
+
+    private int UUIDCounter = 0;
+    private Map<Integer, BufferInfo> dataMap;
 
     private Handler mHandler = null;
 
     private NetUtils() {
         mPool = Executors.newCachedThreadPool();
         ipList = new ArrayList<>();
-        suspendMap = new HashMap<>();
+        dataMap = new HashMap<>();
     }
 
     public static NetUtils getInstance() {
@@ -83,13 +87,13 @@ public class NetUtils extends Handler{
         Log.i("gky", "close all socket and release all resources.");
         ipClient = null;
         mHandler = null;
-        suspendMap.clear();
+        dataMap.clear();
         ipList.clear();
-        suspendMap = null;
+        dataMap = null;
         ipList = null;
 
-        if (hasMessages(WAIT_CHECKOUT_DEVICE_STATUS_REMOTE)) {
-            removeMessages(WAIT_CHECKOUT_DEVICE_STATUS_REMOTE);
+        if (hasMessages(WHAT_CHECKOUT_DEVICE_STATUS_REMOTE)) {
+            removeMessages(WHAT_CHECKOUT_DEVICE_STATUS_REMOTE);
         }
 
         if (initClientSocket != null && !initClientSocket.isClosed()) {
@@ -106,10 +110,6 @@ public class NetUtils extends Handler{
 
     public boolean isConnectToClient() {
         return ipClient != null ? true :false;
-    }
-
-    public boolean isLongKeyFlag() {
-        return isLongKeyFlag;
     }
 
     public void init(Handler handler) {
@@ -145,19 +145,15 @@ public class NetUtils extends Handler{
             return;
         }
 
-        byte[] buffer = getByteBuffer(
-                NetConst.STTP_LOAD_TYPE_IR_KEY,
-                0,
-                0
-        );
+        byte[] buffer = getByteBuffer(NetConst.STTP_LOAD_TYPE_IR_KEY,0,0);
         buffer[DATA_SEGMENT_START_INDEX] = Integer.valueOf(keyCode).byteValue();
-        buffer[DATA_SEGMENT_START_INDEX + 1] = 0;/*是否长按键 0:否*/
-        int packetLength = PACKET_TITLE_LENGTH + 2;
-        SendRunnale sendRunnale = new SendRunnale(buffer, packetLength, null);
-        mPool.submit(sendRunnale);
+        buffer[DATA_SEGMENT_START_INDEX + 1] = NetConst.FLAG_NORMAL_PRESS;
+        int packetLength = DATA_PACKET_TITLE_SIZE + 2;
+        SendRunnable sendRunnable = new SendRunnable(buffer, packetLength, null);
+        mPool.submit(sendRunnable);
     }
 
-    public void sendLongKey(int keyCode, boolean isLongKeyFlag) {
+    public void sendLongKey(int keyCode, boolean longPressState) {
 
         if (ipClient == null) {
             if (mHandler != null) {
@@ -166,26 +162,28 @@ public class NetUtils extends Handler{
             return;
         }
 
-        this.isLongKeyFlag = isLongKeyFlag;
-        byte[] buffer = getByteBuffer(
-                NetConst.STTP_LOAD_TYPE_IR_KEY,
-                0,
-                1
-        );
+        byte[] buffer = getByteBuffer(NetConst.STTP_LOAD_TYPE_IR_KEY, 0, 1);
         buffer[DATA_SEGMENT_START_INDEX] = Integer.valueOf(keyCode).byteValue();
-        buffer[DATA_SEGMENT_START_INDEX+1] = (byte) (isLongKeyFlag ? 1:2) ;/*长按键开始结束1:开始2:结束*/
+        buffer[DATA_SEGMENT_START_INDEX+1] = Integer.valueOf(longPressState ?
+                NetConst.FLAG_LONG_PRESS_ENABLE:NetConst.FLAG_LONG_PRESS_DISENABLE).byteValue();/*长按键开始结束1:开始2:结束*/
 
-        int key = buffer[4] & 0xFF;
-        int msgWhat = WAIT_RESPONSE_STATE | (key << 8);
-        Log.d("gky","wait 2000ms and send message:"+msgWhat+" again. (key:"+key+")");
-        sendEmptyMessageDelayed(msgWhat, 2000);
+        int UUID = buffer[4] & 0xFF;
+        if (!dataMap.containsKey(UUID)) {
+            int msgWhat = WHAT_RESPONSE_STATE | (UUID << 8);
+            Log.d("gky", "wait 2000ms and send message:" + msgWhat + " again. (UUID:" + UUID + ")");
+            sendEmptyMessageDelayed(msgWhat, 1500);
 
-        int packetLength = PACKET_TITLE_LENGTH + 2;
-        SendRunnale sendRunnale = new SendRunnale(buffer, packetLength, null);
-        mPool.submit(sendRunnale);
+            int packetLength = DATA_PACKET_TITLE_SIZE + 2;
+            SendRunnable SendRunnable = new SendRunnable(buffer, packetLength, null);
+            mPool.submit(SendRunnable);
 
-        BufferInfo info = new BufferInfo(buffer, packetLength, ipClient);
-        suspendMap.put(key, info);
+            BufferInfo info = new BufferInfo(buffer, packetLength, ipClient);
+            dataMap.put(UUID, info);
+        }else {
+            if (mHandler != null) {
+                mHandler.sendEmptyMessage(ConfigConst.MSG_EXCEPTION);
+            }
+        }
     }
 
     public void sendMsg(String msg) {
@@ -204,26 +202,22 @@ public class NetUtils extends Handler{
             }
             return;
         }
-        byte[] buffer = getByteBuffer(
-                NetConst.STTP_LOAD_TYPE_CMD_INPUT_TEXT,
-                0,
-                0
-        );
+        byte[] data = getByteBuffer(NetConst.STTP_LOAD_TYPE_CMD_INPUT_TEXT,0,0);
+        ByteArrayInputStream byteArrayip = new ByteArrayInputStream(msg.getBytes());
         try {
-            ByteArrayInputStream bip = new ByteArrayInputStream(msg.getBytes());
-            bip.read(buffer, DATA_SEGMENT_START_INDEX, length);
-            bip.close();
+            byteArrayip.read(data, DATA_SEGMENT_START_INDEX, length);
+            byteArrayip.close();
         }catch (IOException e) {
             e.printStackTrace();
             if (mHandler != null) {
-                mHandler.sendEmptyMessage(4);
+                mHandler.sendEmptyMessage(ConfigConst.MSG_INVALIED_INPUT_TEXT);
             }
             return;
         }
 
-        int packetLength = PACKET_TITLE_LENGTH + length;
-        SendRunnale sendRunnale = new SendRunnale(buffer, packetLength, null);
-        mPool.submit(sendRunnale);
+        int packetLength = DATA_PACKET_TITLE_SIZE + length;
+        SendRunnable SendRunnable = new SendRunnable(data, packetLength, null);
+        mPool.submit(SendRunnable);
     }
 
     public void sendVirtualMotionEvents(int dstX,int dstY, int type){
@@ -235,28 +229,27 @@ public class NetUtils extends Handler{
             return;
         }
 
-        byte[] buffer = getByteBuffer(
-                NetConst.STTP_LOAD_TYPE_CMD_VIRTUAL_MOUSE,
-                0,
-                0
-        );
+        byte[] data = getByteBuffer(NetConst.STTP_LOAD_TYPE_CMD_VIRTUAL_MOUSE,0,0);
 
-        buffer[DATA_SEGMENT_START_INDEX] = Integer.valueOf(dstX & 0xFF).byteValue();
-        buffer[DATA_SEGMENT_START_INDEX + 1] = Integer.valueOf((dstX >> 8) & 0xFF).byteValue();
-        buffer[DATA_SEGMENT_START_INDEX + 2] = Integer.valueOf((dstX >> 16) & 0xFF).byteValue();
-        buffer[DATA_SEGMENT_START_INDEX + 3] = Integer.valueOf((dstX >> 24) & 0xFF).byteValue();
+        data[DATA_SEGMENT_START_INDEX] = Integer.valueOf(dstX & 0xFF).byteValue();
+        data[DATA_SEGMENT_START_INDEX + 1] = Integer.valueOf((dstX >> 8) & 0xFF).byteValue();
+        data[DATA_SEGMENT_START_INDEX + 2] = Integer.valueOf((dstX >> 16) & 0xFF).byteValue();
+        data[DATA_SEGMENT_START_INDEX + 3] = Integer.valueOf((dstX >> 24) & 0xFF).byteValue();
 
-        buffer[DATA_SEGMENT_START_INDEX + 4] = Integer.valueOf(dstY & 0xFF).byteValue();
-        buffer[DATA_SEGMENT_START_INDEX + 5] = Integer.valueOf((dstY >> 8) & 0xFF).byteValue();
-        buffer[DATA_SEGMENT_START_INDEX + 6] = Integer.valueOf((dstY >> 16) & 0xFF).byteValue();
-        buffer[DATA_SEGMENT_START_INDEX + 7] = Integer.valueOf((dstY >> 24) & 0xFF).byteValue();
+        data[DATA_SEGMENT_START_INDEX + 4] = Integer.valueOf(dstY & 0xFF).byteValue();
+        data[DATA_SEGMENT_START_INDEX + 5] = Integer.valueOf((dstY >> 8) & 0xFF).byteValue();
+        data[DATA_SEGMENT_START_INDEX + 6] = Integer.valueOf((dstY >> 16) & 0xFF).byteValue();
+        data[DATA_SEGMENT_START_INDEX + 7] = Integer.valueOf((dstY >> 24) & 0xFF).byteValue();
 
-        buffer[DATA_SEGMENT_START_INDEX + 8] = Integer.valueOf(type & 0xFF).byteValue();
+        data[DATA_SEGMENT_START_INDEX + 8] = Integer.valueOf(type & 0xFF).byteValue();
 
-        int packetLength = PACKET_TITLE_LENGTH + 9;
-        Log.i("gky","make virtual mouse("+dstX+","+dstY+")");
-        SendRunnale sendRunnale = new SendRunnale(buffer, packetLength, null);
-        mPool.submit(sendRunnale);
+        int packetLength = DATA_PACKET_TITLE_SIZE + 9;
+        SendRunnable SendRunnable = new SendRunnable(data, packetLength, ipClient);
+        mPool.submit(SendRunnable);
+    }
+
+    public void sendFile(String filePath) {
+        String fileName = filePath.substring(filePath.lastIndexOf("/"), 1);
     }
 
     public byte[] getByteBuffer(int load_type, int sn, int receive_flag) {
@@ -264,19 +257,18 @@ public class NetUtils extends Handler{
 
         /*初始化版本*/
         int version = 1 << 6;
+
         /*初始化设备ID*/
-        int deviceId = 55;/*TV:56,Phone:55*/
+        int deviceId = DEVICE_TYPE_PHONE;
         buffer[0] = Integer.valueOf((version | deviceId)).byteValue();
         buffer[1] = (byte) (Integer.valueOf(load_type & 0x7F).byteValue()
                             | (receive_flag != 0 ? 0x80:0x00));
 
         /*SN:传输序列*/
-        for (int i = 2; i <= 3; i++) {
-            buffer[i] = Integer.valueOf(sn & 0xFF).byteValue();
-            sn = sn >> 8;
-        }
+        buffer[2] = Integer.valueOf(sn & 0xFF).byteValue();
+        buffer[3] = Integer.valueOf((sn >> 8) & 0xFF).byteValue();
 
-        buffer[4] = (byte) (randomCount != 255?++randomCount:(randomCount-=255));
+        buffer[4] = Integer.valueOf(UUIDCounter != 255?++UUIDCounter:(UUIDCounter-=255)).byteValue();
 
         return buffer;
     }
@@ -290,31 +282,31 @@ public class NetUtils extends Handler{
         Log.d("gky", "parseReceiveBuffer::version[" + version + "] deviceId[" + deviceId
                 + "] load_type[" + load_type + "] SN[" + sn + "] receive_flag[" + receive_flag + "]");
 
-        int randomKey = buffer[4] & 0xFF;
+        int UUID = buffer[4] & 0xFF;
 
-        if (suspendMap.size() != 0) {
-            if (suspendMap.containsKey(randomKey) && deviceId == 55) {
+        if (dataMap.size() != 0) {
+            if (dataMap.containsKey(UUID) && deviceId == DEVICE_TYPE_PHONE) {
 
-                BufferInfo info = suspendMap.get(randomKey);
+                BufferInfo info = dataMap.get(UUID);
                 int type = info.buffer[1] & 0x7F;
-                Log.d("gky","get suspendBuffer: "+randomKey+"/"+type+" and remove it");
+                Log.d("gky","get suspendBuffer: "+UUID+"/"+type+" and remove it");
                 if (type != NetConst.STTP_LOAD_TYPE_REQUEST_CONNECTSTATUS) {
 
-                    int msgWhat = WAIT_RESPONSE_STATE | (randomKey << 8);
+                    int msgWhat = WHAT_RESPONSE_STATE | (UUID << 8);
                     if (hasMessages(msgWhat)) {
                         Log.i("gky", "remove suspend message: " + msgWhat);
                         removeMessages(msgWhat);
                     }
                 }
-                suspendMap.remove(randomKey);
+                dataMap.remove(UUID);
                 return;/*应答的确认信息不再解析，直接返回*/
             }
         }
 
-        if (load_type == NetConst.STTP_LOAD_TYPE_REQUEST_CONNECTION && deviceId == 56) {
+        if (load_type == NetConst.STTP_LOAD_TYPE_REQUEST_CONNECTION && deviceId == DEVICE_TYPE_TV) {
             String ip = datagramPacket.getAddress().getHostAddress();
             if (ipList != null && !ipList.contains(ip)) {
-                int length = datagramPacket.getLength() - PACKET_TITLE_LENGTH;
+                int length = datagramPacket.getLength() - DATA_PACKET_TITLE_SIZE;
                 String deviceName = new String(buffer, DATA_SEGMENT_START_INDEX, length,"utf-8");
                 Log.i("gky", "REVEIVE CONNECTION FROM " + deviceName + "[" + ip + "]");
                 if (ipClient == null) {
@@ -330,8 +322,8 @@ public class NetUtils extends Handler{
                     mHandler.sendMessage(msg);
                 }
 
-                if (!hasMessages(WAIT_CHECKOUT_DEVICE_STATUS_REMOTE)) {
-                    sendEmptyMessageDelayed(WAIT_CHECKOUT_DEVICE_STATUS_REMOTE,
+                if (!hasMessages(WHAT_CHECKOUT_DEVICE_STATUS_REMOTE)) {
+                    sendEmptyMessageDelayed(WHAT_CHECKOUT_DEVICE_STATUS_REMOTE,
                             DELAY_CHECKOUT_TIME);
                 }
             }
@@ -341,46 +333,45 @@ public class NetUtils extends Handler{
     @Override
     public void handleMessage(Message msg) {
         int what = msg.what & 0xFF;
-        if (what == WAIT_RESPONSE_STATE) {
-            Log.i("gky","WAIT_RESPONSE_STATE");
+        if (what == WHAT_RESPONSE_STATE) {
+            Log.i("gky","WHAT_RESPONSE_STATE");
             int randomKey = (msg.what >> 8) & 0xFF;
-            if (suspendMap.containsKey(randomKey)) {
-                BufferInfo info = suspendMap.get(randomKey);
-                SendRunnale sendRunnale = new SendRunnale(info.buffer, info.length, null);
-                mPool.submit(sendRunnale);
+            if (dataMap.containsKey(randomKey)) {
+                BufferInfo info = dataMap.get(randomKey);
+                SendRunnable SendRunnable = new SendRunnable(info.buffer, info.length, null);
+                mPool.submit(SendRunnable);
                 Log.i("gky", "resend message: " + randomKey);
             }
-        } else if (what == WAIT_CHECKOUT_DEVICE_STATUS_REMOTE) {
-            Log.i("gky","WAIT_CHECKOUT_DEVICE_STATUS_REMOTE ipList: "+ipList.size());
+        } else if (what == WHAT_CHECKOUT_DEVICE_STATUS_REMOTE) {
             for (String ip : ipList){
                 byte[] buffer = getByteBuffer(NetConst.STTP_LOAD_TYPE_REQUEST_CONNECTSTATUS,0,1);
-                SendRunnale sendRunnale = new SendRunnale(buffer, PACKET_TITLE_LENGTH, ip);
-                mPool.submit(sendRunnale);
+                SendRunnable SendRunnable = new SendRunnable(buffer, DATA_PACKET_TITLE_SIZE, ip);
+                mPool.submit(SendRunnable);
 
-                int randomKey = buffer[4] & 0xFF;
-                BufferInfo info = new BufferInfo(buffer, PACKET_TITLE_LENGTH, ip);
-                suspendMap.put(randomKey, info);
+                int UUID = buffer[4] & 0xFF;
+                BufferInfo info = new BufferInfo(buffer, DATA_PACKET_TITLE_SIZE, ip);
+                dataMap.put(UUID, info);
             }
 
-            if (hasMessages(WAIT_CHECKOUT_DEVICE_STATUS_REMOTE)) {
-                removeMessages(WAIT_CHECKOUT_DEVICE_STATUS_REMOTE);
+            if (hasMessages(WHAT_CHECKOUT_DEVICE_STATUS_REMOTE)) {
+                removeMessages(WHAT_CHECKOUT_DEVICE_STATUS_REMOTE);
             }
-            sendEmptyMessageDelayed(WAIT_CHECKOUT_DEVICE_STATUS_REMOTE,
+            sendEmptyMessageDelayed(WHAT_CHECKOUT_DEVICE_STATUS_REMOTE,
                     DELAY_CHECKOUT_TIME);
 
-            if (hasMessages(WAIT_CHECKOUT_DEVICE_STATUS_LOCAL)) {
-                removeMessages(WAIT_CHECKOUT_DEVICE_STATUS_LOCAL);
+            if (hasMessages(WHAT_CHECKOUT_DEVICE_STATUS_LOCAL)) {
+                removeMessages(WHAT_CHECKOUT_DEVICE_STATUS_LOCAL);
             }
-            sendEmptyMessageDelayed(WAIT_CHECKOUT_DEVICE_STATUS_LOCAL,1500);
+            sendEmptyMessageDelayed(WHAT_CHECKOUT_DEVICE_STATUS_LOCAL,1500);
 
-        } else if (what == WAIT_CHECKOUT_DEVICE_STATUS_LOCAL) {
-            Log.i("gky","WAIT_CHECKOUT_DEVICE_STATUS_LOCAL");
+        } else if (what == WHAT_CHECKOUT_DEVICE_STATUS_LOCAL) {
+            Log.i("gky","WHAT_CHECKOUT_DEVICE_STATUS_LOCAL");
             checkDeviceStatus();
         }
     }
 
     private void checkDeviceStatus() {
-        Iterator iter = suspendMap.entrySet().iterator();
+        Iterator iter = dataMap.entrySet().iterator();
         List<Integer> dels = new ArrayList<>();
         while (iter.hasNext()) {
             Map.Entry entry = (Map.Entry) iter.next();
@@ -404,7 +395,7 @@ public class NetUtils extends Handler{
          }
 
         for (int key : dels) {
-            suspendMap.remove(key);
+            dataMap.remove(key);
         }
     }
 
@@ -445,17 +436,13 @@ public class NetUtils extends Handler{
                     initClientSocket.bind(new InetSocketAddress(BROADCAST_PORT));
                 }
 
-                byte[] buffer = getByteBuffer(
-                        NetConst.STTP_LOAD_TYPE_BROADCAST,
-                        0,
-                        0
-                );
+                byte[] buffer = getByteBuffer(NetConst.STTP_LOAD_TYPE_BROADCAST,0,0);
                 int length = Build.PRODUCT.getBytes().length;
                 ByteArrayInputStream bip = new ByteArrayInputStream(Build.PRODUCT.getBytes());
                 bip.read(buffer, 8, length);
                 bip.close();
 
-                int packetLength = PACKET_TITLE_LENGTH + length;
+                int packetLength = DATA_PACKET_TITLE_SIZE + length;
                 DatagramPacket datagramPacket = new DatagramPacket(buffer,packetLength,
                         InetAddress.getByName(broadcastIp),BROADCAST_PORT);
                 boolean flag = false;
@@ -467,7 +454,6 @@ public class NetUtils extends Handler{
                         mHandler.sendEmptyMessage(0);
                         flag = true;
                     }
-
                 }
                 Log.i("gky","########ipClient is "+ipClient+"########");
             } catch (IOException e) {
@@ -527,7 +513,7 @@ public class NetUtils extends Handler{
         }
     }
 
-    public class SendRunnale implements Runnable {
+    public class SendRunnable implements Runnable {
 
         private byte[] buffer = null;
         private int length = -1;
@@ -536,7 +522,7 @@ public class NetUtils extends Handler{
         private DatagramSocket sendSocket;
         private static final int BROADCAST_PORT = 5555;
 
-        public SendRunnale(byte[] buffer, int length, String dstIp) {
+        public SendRunnable(byte[] buffer, int length, String dstIp) {
             this.buffer = buffer;
             this.length = length;
             this.dstIp = dstIp;
@@ -546,14 +532,12 @@ public class NetUtils extends Handler{
         public void run() {
             try {
                 DatagramPacket datagramPacket = new DatagramPacket(buffer,length,
-                    InetAddress.getByName((dstIp != null?dstIp:ipClient)),BROADCAST_PORT);
-                if (sendSocket == null || sendSocket.isClosed()) {
-                    sendSocket = new DatagramSocket(null);
-                    sendSocket.setReuseAddress(true);
-                    sendSocket.bind(new InetSocketAddress(BROADCAST_PORT));
+                    InetAddress.getByName(dstIp),BROADCAST_PORT);
+                if (sendSocket == null) {
+                    sendSocket = new DatagramSocket();
                 }
                 sendSocket.send(datagramPacket);
-                Log.i("gky", "send message: " + (buffer[4] & 0xFF) + " to: " + (dstIp != null?dstIp:ipClient));
+                Log.i("gky", "send message: " + (buffer[4] & 0xFF) + " to: " + dstIp);
             } catch (SocketException e) {
                 Log.e("gky",getClass()+":"+e.toString());
                 e.printStackTrace();
@@ -563,6 +547,87 @@ public class NetUtils extends Handler{
             } finally {
                 sendSocket.close();
                 sendSocket = null;
+            }
+        }
+    }
+
+    public class SendFileRunnale implements Runnable {
+
+        private String fileName = null;
+        private String dstIp = null;
+
+        private DatagramSocket sendSocket;
+        private DatagramSocket receiveSocket;
+
+        public SendFileRunnale(String fileName, String dstIp) {
+            this.fileName = fileName;
+            this.dstIp = dstIp;
+        }
+
+        @Override
+        public void run() {
+            try {
+                sendSocket = new DatagramSocket();
+                receiveSocket = new DatagramSocket(null);
+                receiveSocket.setReuseAddress(true);
+                receiveSocket.bind(new InetSocketAddress(5558));
+
+                File file = new File(fileName);
+                long totalLength = file.length();
+                long sendSize = 0;
+                if (file.exists()) {
+
+                    FileInputStream fileInputStream = new FileInputStream(file);
+                    int sendSN = 0;
+                    int receiveSN = 0;
+                    while (true) {
+                        byte[] data = null;
+                        int length = 0;
+                        if (sendSN == receiveSN) {
+                            sendSN++;
+                            data = getByteBuffer(NetConst.STTP_LOAD_TYPE_CMD_FILE, sendSN, 1);
+                            if ((length = fileInputStream.read(data, DATA_SEGMENT_START_INDEX, DATE_SEGMENT_LENGTH)) > 0) {
+                                DatagramPacket sendPacket = new DatagramPacket(data, DATA_PACKET_TITLE_SIZE + length,
+                                        InetAddress.getByName(dstIp), 5557);
+                                sendSocket.send(sendPacket);
+
+                                byte[] rData = new byte[DATA_PACKET_SIZE];
+                                DatagramPacket receivePacket = new DatagramPacket(rData, rData.length);
+                                receiveSocket.receive(receivePacket);
+                                receiveSN = (rData[2] & 0xFF) | ((rData[3] & 0xFF) << 8);
+                                sendSize += length;
+                                if (mHandler != null) {
+                                    float percent = (float)(((double)sendSize/totalLength)*100);
+                                    mHandler.sendMessage(mHandler.obtainMessage(ConfigConst.MSG_PROGRESS_PERCENT,percent));
+                                }
+                            }else {
+                                if (mHandler != null) {
+                                    mHandler.sendMessage(mHandler.obtainMessage(ConfigConst.MSG_PROGRESS_PERCENT,100));
+                                }
+                                DatagramPacket sendPacket = new DatagramPacket(data, DATA_PACKET_TITLE_SIZE,
+                                        InetAddress.getByName(dstIp), 5557);
+                                sendSocket.send(sendPacket);
+                                break;
+                            }
+                        }else {//重传数据包
+                            DatagramPacket sendPacket = new DatagramPacket(data, DATA_PACKET_TITLE_SIZE + length,
+                                    InetAddress.getByName(dstIp), 5557);
+                            sendSocket.send(sendPacket);
+
+                            byte[] rData = new byte[DATA_PACKET_SIZE];
+                            DatagramPacket receivePacket = new DatagramPacket(rData, rData.length);
+                            receiveSocket.receive(receivePacket);
+                            receiveSN = (rData[2] & 0xFF) | ((rData[3] & 0xFF) << 8);
+                        }
+                    }
+                    fileInputStream.close();
+                }
+                sendSocket.close();
+                receiveSocket.close();
+            } catch (SocketException e) {
+                e.printStackTrace();
+            }catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }

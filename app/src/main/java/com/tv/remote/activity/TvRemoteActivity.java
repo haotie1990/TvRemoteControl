@@ -60,7 +60,8 @@ public class TvRemoteActivity extends BaseActivity
     @InjectView(R.id.btn_n_right)
     ImageButton btn_n_right;
 
-    private int curIndex;
+    private int curIndexID;
+    private boolean longPressState = false;
 
     private Vibrator vibrator;
 
@@ -70,7 +71,7 @@ public class TvRemoteActivity extends BaseActivity
         setContentView(R.layout.layout_main);
         setTitle(this.getClass().getSimpleName());
         vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-        curIndex = relativeLayout_navi.getId();
+        curIndexID = relativeLayout_navi.getId();
         initSendCommentBtn();
         add(this);
     }
@@ -113,6 +114,7 @@ public class TvRemoteActivity extends BaseActivity
     public boolean onLongClick(View view) {
         Log.i("gky", "onLongClick");
         vibrator.vibrate(100);
+        longPressState = true;
         switch (view.getId()) {
             case R.id.btn_vol_plus:
                 NetUtils.getInstance().sendLongKey(KeyEvent.KEYCODE_VOLUME_UP, true);
@@ -143,7 +145,8 @@ public class TvRemoteActivity extends BaseActivity
             R.id.btn_left,R.id.btn_right})
     public boolean onTouch(View view, MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_UP) {
-            if (NetUtils.getInstance().isLongKeyFlag()) {
+            if (longPressState) {
+                longPressState = false;
                 Log.i("gky","onTouch stop longKey");
                 switch (view.getId()) {
                     case R.id.btn_vol_plus:
@@ -356,7 +359,7 @@ public class TvRemoteActivity extends BaseActivity
 
     private void runAnimationSwitchLeft() {
         Log.i("gky", "runAnimationSwitch");
-        if (curIndex == relativeLayout_navi.getId()) {
+        if (curIndexID == relativeLayout_navi.getId()) {
             relativeLayout_navi.animate()
                     .translationX(-Utils.getScreenWidth(this))
                     .setDuration(300)
@@ -369,11 +372,11 @@ public class TvRemoteActivity extends BaseActivity
                             relativeLayout_msg.setVisibility(View.GONE);
                             relativeLayout_num.setTranslationX(0);
                             relativeLayout_num.setVisibility(View.VISIBLE);
-                            curIndex = relativeLayout_num.getId();
+                            curIndexID = relativeLayout_num.getId();
                         }
                     })
                     .start();
-        }else if (curIndex == relativeLayout_num.getId()) {
+        }else if (curIndexID == relativeLayout_num.getId()) {
             relativeLayout_num.animate()
                     .translationX(-Utils.getScreenWidth(this))
                     .setDuration(300)
@@ -386,11 +389,11 @@ public class TvRemoteActivity extends BaseActivity
                             relativeLayout_msg.setVisibility(View.GONE);
                             relativeLayout_touchpad.setTranslationX(0);
                             relativeLayout_touchpad.setVisibility(View.VISIBLE);
-                            curIndex = relativeLayout_touchpad.getId();
+                            curIndexID = relativeLayout_touchpad.getId();
                         }
                     })
                     .start();
-        }else if (curIndex == relativeLayout_touchpad.getId()) {
+        }else if (curIndexID == relativeLayout_touchpad.getId()) {
             relativeLayout_touchpad.animate()
                     .translationX(-Utils.getScreenWidth(this))
                     .setDuration(300)
@@ -403,11 +406,11 @@ public class TvRemoteActivity extends BaseActivity
                             relativeLayout_navi.setVisibility(View.GONE);
                             relativeLayout_msg.setTranslationX(0);
                             relativeLayout_msg.setVisibility(View.VISIBLE);
-                            curIndex = relativeLayout_msg.getId();
+                            curIndexID = relativeLayout_msg.getId();
                         }
                     })
                     .start();
-        }else if (curIndex == relativeLayout_msg.getId()) {
+        }else if (curIndexID == relativeLayout_msg.getId()) {
             relativeLayout_msg.animate()
                     .translationX(-Utils.getScreenWidth(this))
                     .setDuration(300)
@@ -420,7 +423,7 @@ public class TvRemoteActivity extends BaseActivity
                             relativeLayout_num.setVisibility(View.GONE);
                             relativeLayout_navi.setTranslationX(0);
                             relativeLayout_navi.setVisibility(View.VISIBLE);
-                            curIndex = relativeLayout_navi.getId();
+                            curIndexID = relativeLayout_navi.getId();
                         }
                     })
                     .start();
@@ -429,7 +432,7 @@ public class TvRemoteActivity extends BaseActivity
 
     private void runAnimationSwitchRight() {
             Log.i("gky", "runAnimationSwitchRight");
-            if (curIndex == relativeLayout_navi.getId()) {
+            if (curIndexID == relativeLayout_navi.getId()) {
                 relativeLayout_navi.animate()
                         .translationX(Utils.getScreenWidth(this))
                         .setDuration(300)
@@ -442,11 +445,11 @@ public class TvRemoteActivity extends BaseActivity
                                 relativeLayout_msg.setVisibility(View.GONE);
                                 relativeLayout_num.setTranslationX(0);
                                 relativeLayout_num.setVisibility(View.VISIBLE);
-                                curIndex = relativeLayout_num.getId();
+                                curIndexID = relativeLayout_num.getId();
                             }
                         })
                         .start();
-            }else if (curIndex == relativeLayout_num.getId()) {
+            }else if (curIndexID == relativeLayout_num.getId()) {
                 relativeLayout_num.animate()
                         .translationX(Utils.getScreenWidth(this))
                         .setDuration(300)
@@ -459,11 +462,11 @@ public class TvRemoteActivity extends BaseActivity
                                 relativeLayout_msg.setVisibility(View.GONE);
                                 relativeLayout_touchpad.setTranslationX(0);
                                 relativeLayout_touchpad.setVisibility(View.VISIBLE);
-                                curIndex = relativeLayout_touchpad.getId();
+                                curIndexID = relativeLayout_touchpad.getId();
                             }
                         })
                         .start();
-            }else if (curIndex == relativeLayout_touchpad.getId()) {
+            }else if (curIndexID == relativeLayout_touchpad.getId()) {
                 relativeLayout_touchpad.animate()
                         .translationX(Utils.getScreenWidth(this))
                         .setDuration(300)
@@ -476,11 +479,11 @@ public class TvRemoteActivity extends BaseActivity
                                 relativeLayout_navi.setVisibility(View.GONE);
                                 relativeLayout_msg.setTranslationX(0);
                                 relativeLayout_msg.setVisibility(View.VISIBLE);
-                                curIndex = relativeLayout_msg.getId();
+                                curIndexID = relativeLayout_msg.getId();
                             }
                         })
                         .start();
-            }else if (curIndex == relativeLayout_msg.getId()) {
+            }else if (curIndexID == relativeLayout_msg.getId()) {
                 relativeLayout_msg.animate()
                         .translationX(Utils.getScreenWidth(this))
                         .setDuration(300)
@@ -493,7 +496,7 @@ public class TvRemoteActivity extends BaseActivity
                                 relativeLayout_msg.setVisibility(View.GONE);
                                 relativeLayout_navi.setTranslationX(0);
                                 relativeLayout_navi.setVisibility(View.VISIBLE);
-                                curIndex = relativeLayout_navi.getId();
+                                curIndexID = relativeLayout_navi.getId();
                             }
                         })
                         .start();

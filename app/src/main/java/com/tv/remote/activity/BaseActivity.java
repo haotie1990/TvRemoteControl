@@ -15,7 +15,6 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
-import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.tv.remote.R;
@@ -217,8 +216,8 @@ public abstract class BaseActivity extends AppCompatActivity
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             NetUtils.getInstance().stopInitClient();
-                            if (netHandler.hasMessages(5)) {
-                                netHandler.removeMessages(5);
+                            if (netHandler.hasMessages(ConfigConst.MSG_CONNECTION_TIME_OUT)) {
+                                netHandler.removeMessages(ConfigConst.MSG_CONNECTION_TIME_OUT);
                             }
                         }
                     });
@@ -243,8 +242,8 @@ public abstract class BaseActivity extends AppCompatActivity
                     if (mDialog != null && mDialog.isShowing()) {
                         mDialog.setMessage("已经发现："+getDevices().getItemCount()+"设备");
                     }
-                    if (hasMessages(5)) {
-                        removeMessages(5);
+                    if (hasMessages(ConfigConst.MSG_CONNECTION_TIME_OUT)) {
+                        removeMessages(ConfigConst.MSG_CONNECTION_TIME_OUT);
                     }
                     break;
                 case ConfigConst.MSG_DISCONNECTION:
@@ -274,6 +273,10 @@ public abstract class BaseActivity extends AppCompatActivity
                         Toast.makeText(BaseActivity.this,"设备："+deviceInfo.name+"["+deviceInfo.ip+"] 离线。",
                                 Toast.LENGTH_SHORT).show();
                     }
+                    break;
+                case ConfigConst.MSG_EXCEPTION:
+                    Toast.makeText(BaseActivity.this,"出现异常，无法操作",
+                            Toast.LENGTH_SHORT).show();
                     break;
             }
         }

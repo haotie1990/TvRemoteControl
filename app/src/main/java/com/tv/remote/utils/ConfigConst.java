@@ -19,4 +19,8 @@ public class ConfigConst {
 
     public static final int MSG_DEVICE_DISCONNECTION = 6;
 
+    public static final int MSG_EXCEPTION = 7;
+
+    public static final int MSG_PROGRESS_PERCENT = 8;
+
 }
