@@ -51,7 +51,7 @@ public class NetUtils extends Handler{
     private static final int WHAT_CHECKOUT_DEVICE_STATUS_REMOTE = 0xA0;
     private static final int WHAT_CHECKOUT_DEVICE_STATUS_LOCAL = 0xB0;
 
-    private static final int DELAY_CHECKOUT_TIME = 10 * 1000;
+    private static final int DELAY_CHECKOUT_TIME = 6 * 1000;
 
     private static final int DEVICE_TYPE_PHONE = 55;
     private static final int DEVICE_TYPE_TV = 56;
@@ -416,6 +416,7 @@ public class NetUtils extends Handler{
         for (int key : dels) {
             dataMap.remove(key);
         }
+        Log.i("gky","====================================================================");
     }
 
     private static class BufferInfo {
