@@ -58,6 +58,7 @@ public class NetUtils extends Handler{
 
     private int UUIDCounter = 0;
     private Map<Integer, BufferInfo> dataMap;
+    private Map<String, Integer> stateMap;
 
     private Handler mHandler = null;
 
@@ -65,6 +66,7 @@ public class NetUtils extends Handler{
         mPool = Executors.newCachedThreadPool();
         ipList = new ArrayList<>();
         dataMap = new HashMap<>();
+        stateMap = new HashMap<>();
     }
 
     public static NetUtils getInstance() {
@@ -149,7 +151,7 @@ public class NetUtils extends Handler{
         buffer[DATA_SEGMENT_START_INDEX] = Integer.valueOf(keyCode).byteValue();
         buffer[DATA_SEGMENT_START_INDEX + 1] = NetConst.FLAG_NORMAL_PRESS;
         int packetLength = DATA_PACKET_TITLE_SIZE + 2;
-        SendRunnable sendRunnable = new SendRunnable(buffer, packetLength, null);
+        SendRunnable sendRunnable = new SendRunnable(buffer, packetLength, ipClient);
         mPool.submit(sendRunnable);
     }
 
@@ -174,7 +176,7 @@ public class NetUtils extends Handler{
             sendEmptyMessageDelayed(msgWhat, 1500);
 
             int packetLength = DATA_PACKET_TITLE_SIZE + 2;
-            SendRunnable SendRunnable = new SendRunnable(buffer, packetLength, null);
+            SendRunnable SendRunnable = new SendRunnable(buffer, packetLength, ipClient);
             mPool.submit(SendRunnable);
 
             BufferInfo info = new BufferInfo(buffer, packetLength, ipClient);
@@ -216,7 +218,7 @@ public class NetUtils extends Handler{
         }
 
         int packetLength = DATA_PACKET_TITLE_SIZE + length;
-        SendRunnable SendRunnable = new SendRunnable(data, packetLength, null);
+        SendRunnable SendRunnable = new SendRunnable(data, packetLength, ipClient);
         mPool.submit(SendRunnable);
     }
 
@@ -297,6 +299,12 @@ public class NetUtils extends Handler{
                         Log.i("gky", "remove suspend message: " + msgWhat);
                         removeMessages(msgWhat);
                     }
+                }else {
+                    String ip = datagramPacket.getAddress().getHostAddress();
+                    if (stateMap.containsKey(ip)) {
+                        stateMap.put(ip,0);
+                        Log.i("gky","reset state counter to 0"+" IP "+ip);
+                    }
                 }
                 dataMap.remove(UUID);
                 return;/*应答的确认信息不再解析，直接返回*/
@@ -313,6 +321,7 @@ public class NetUtils extends Handler{
                     ipClient = ip;
                 }
                 ipList.add(ip);
+                stateMap.put(ip,0);
 
                 Message msg = mHandler.obtainMessage();
                 DeviceInfo deviceInfo = new DeviceInfo(ip, deviceName, true, ip.equals(ipClient));
@@ -338,32 +347,35 @@ public class NetUtils extends Handler{
             int randomKey = (msg.what >> 8) & 0xFF;
             if (dataMap.containsKey(randomKey)) {
                 BufferInfo info = dataMap.get(randomKey);
-                SendRunnable SendRunnable = new SendRunnable(info.buffer, info.length, null);
+                SendRunnable SendRunnable = new SendRunnable(info.buffer, info.length, ipClient);
                 mPool.submit(SendRunnable);
                 Log.i("gky", "resend message: " + randomKey);
             }
         } else if (what == WHAT_CHECKOUT_DEVICE_STATUS_REMOTE) {
-            for (String ip : ipList){
-                byte[] buffer = getByteBuffer(NetConst.STTP_LOAD_TYPE_REQUEST_CONNECTSTATUS,0,1);
-                SendRunnable SendRunnable = new SendRunnable(buffer, DATA_PACKET_TITLE_SIZE, ip);
-                mPool.submit(SendRunnable);
+            if (ipList.size() > 0) {
+                Log.i("gky", "WHAT_CHECKOUT_DEVICE_STATUS_REMOTE");
+                for (String ip : ipList) {
+                    byte[] buffer = getByteBuffer(NetConst.STTP_LOAD_TYPE_REQUEST_CONNECTSTATUS, 0, 1);
+                    SendRunnable SendRunnable = new SendRunnable(buffer, DATA_PACKET_TITLE_SIZE, ip);
+                    mPool.submit(SendRunnable);
 
-                int UUID = buffer[4] & 0xFF;
-                BufferInfo info = new BufferInfo(buffer, DATA_PACKET_TITLE_SIZE, ip);
-                dataMap.put(UUID, info);
+                    int UUID = buffer[4] & 0xFF;
+                    BufferInfo info = new BufferInfo(buffer, DATA_PACKET_TITLE_SIZE, ip);
+                    dataMap.put(UUID, info);
+                    Log.i("gky", "dataMap put " + UUID);
+                }
+
+                if (hasMessages(WHAT_CHECKOUT_DEVICE_STATUS_REMOTE)) {
+                    removeMessages(WHAT_CHECKOUT_DEVICE_STATUS_REMOTE);
+                }
+                sendEmptyMessageDelayed(WHAT_CHECKOUT_DEVICE_STATUS_REMOTE,
+                        DELAY_CHECKOUT_TIME);
+
+                if (hasMessages(WHAT_CHECKOUT_DEVICE_STATUS_LOCAL)) {
+                    removeMessages(WHAT_CHECKOUT_DEVICE_STATUS_LOCAL);
+                }
+                sendEmptyMessageDelayed(WHAT_CHECKOUT_DEVICE_STATUS_LOCAL, 2000);
             }
-
-            if (hasMessages(WHAT_CHECKOUT_DEVICE_STATUS_REMOTE)) {
-                removeMessages(WHAT_CHECKOUT_DEVICE_STATUS_REMOTE);
-            }
-            sendEmptyMessageDelayed(WHAT_CHECKOUT_DEVICE_STATUS_REMOTE,
-                    DELAY_CHECKOUT_TIME);
-
-            if (hasMessages(WHAT_CHECKOUT_DEVICE_STATUS_LOCAL)) {
-                removeMessages(WHAT_CHECKOUT_DEVICE_STATUS_LOCAL);
-            }
-            sendEmptyMessageDelayed(WHAT_CHECKOUT_DEVICE_STATUS_LOCAL,1500);
-
         } else if (what == WHAT_CHECKOUT_DEVICE_STATUS_LOCAL) {
             Log.i("gky","WHAT_CHECKOUT_DEVICE_STATUS_LOCAL");
             checkDeviceStatus();
@@ -379,18 +391,25 @@ public class NetUtils extends Handler{
             BufferInfo info = (BufferInfo) entry.getValue();
             int load_type = info.buffer[1] & 0x7F;
             if (load_type == NetConst.STTP_LOAD_TYPE_REQUEST_CONNECTSTATUS) {
-                Log.d("gky", "checkDeviceStatus ip: " + info.dstIp + " connect time out");
+                int counter = stateMap.get(info.dstIp);
+                counter++;
+                Log.i("gky", "UUID " + key+" counter "+counter+" IP "+info.dstIp);
+                if (counter > 5) {
+                    Log.d("gky", "checkDeviceStatus ip: " + info.dstIp + " connect time out");
+                    ipList.remove(info.dstIp);
+                    if (ipClient != null && ipClient.equals(info.dstIp)) {
+                        ipClient = null;
+                    }
 
-                dels.add(key);
-                ipList.remove(info.dstIp);
-                if (ipClient != null && ipClient.equals(info.dstIp)) {
-                    ipClient = null;
+                    Message msg = mHandler.obtainMessage();
+                    msg.what = ConfigConst.MSG_DEVICE_DISCONNECTION | (key << 8);
+                    msg.obj = info.dstIp;
+                    mHandler.sendMessage(msg);
+                }else {
+                    stateMap.put(info.dstIp,counter);
                 }
 
-                Message msg = mHandler.obtainMessage();
-                msg.what = ConfigConst.MSG_DEVICE_DISCONNECTION | (key << 8);
-                msg.obj = info.dstIp;
-                mHandler.sendMessage(msg);
+                dels.add(key);
             }
          }
 

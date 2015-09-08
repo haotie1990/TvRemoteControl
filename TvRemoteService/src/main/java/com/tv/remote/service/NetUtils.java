@@ -22,7 +22,6 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
-import java.util.EventListener;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -173,8 +172,9 @@ public class NetUtils {
         int load_type = buffer[1] & 0x7F;
         int receive_flag = (buffer[1] & 0x80) >> 7;
         int sn = (buffer[2] & 0xFF) | ((buffer[3] & 0xFF) << 8);
+        int UUID = buffer[4] & 0xFF;
         Log.i("gky", "parseReceiveBuffer::version[" + version + "] deviceId[" + deviceId
-                + "] load_type[" + load_type + "] SN[" + sn + "] receive_flag[" + receive_flag + "]");
+                + "] load_type[" + load_type + "] SN[" + sn + "] receive_flag[" + receive_flag + "] UUID["+UUID+"]");
 
         if (receive_flag == NEED_REPLY) {
             send(buffer, datagramPacket.getLength() - DATA_PACKET_TITLE_SIZE,
