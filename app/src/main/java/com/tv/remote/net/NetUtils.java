@@ -42,9 +42,9 @@ public class NetUtils extends Handler{
     private ReceiveRunnale receiveRunnale = null;
     private InitGetClient initGetClient = null;
 
-    private static final int DATA_PACKET_TITLE_SIZE = 8;
+    private static final int DATA_PACKET_TITLE_SIZE = 10;
     private static final int DATA_PACKET_SIZE = 1400;
-    private static final int DATA_SEGMENT_START_INDEX = 8;
+    private static final int DATA_SEGMENT_START_INDEX = 10;
     private static final int DATE_SEGMENT_LENGTH = 1392;
 
     private static final int WHAT_RESPONSE_STATE = 0xFF;
@@ -148,10 +148,11 @@ public class NetUtils extends Handler{
         }
 
         byte[] buffer = getByteBuffer(NetConst.STTP_LOAD_TYPE_IR_KEY,0,0);
+        buffer[8] = 12 & 0xFF;
+        buffer[9] = (12 >> 8) & 0xFF;
         buffer[DATA_SEGMENT_START_INDEX] = Integer.valueOf(keyCode).byteValue();
         buffer[DATA_SEGMENT_START_INDEX + 1] = NetConst.FLAG_NORMAL_PRESS;
-        int packetLength = DATA_PACKET_TITLE_SIZE + 2;
-        SendRunnable sendRunnable = new SendRunnable(buffer, packetLength, ipClient);
+        SendRunnable sendRunnable = new SendRunnable(buffer, 12, ipClient);
         mPool.submit(sendRunnable);
     }
 
@@ -165,6 +166,8 @@ public class NetUtils extends Handler{
         }
 
         byte[] buffer = getByteBuffer(NetConst.STTP_LOAD_TYPE_IR_KEY, 0, 1);
+        buffer[8] = 12 & 0xFF;
+        buffer[9] = (12 >> 8) & 0xFF;
         buffer[DATA_SEGMENT_START_INDEX] = Integer.valueOf(keyCode).byteValue();
         buffer[DATA_SEGMENT_START_INDEX+1] = Integer.valueOf(longPressState ?
                 NetConst.FLAG_LONG_PRESS_ENABLE:NetConst.FLAG_LONG_PRESS_DISENABLE).byteValue();/*长按键开始结束1:开始2:结束*/
@@ -175,11 +178,10 @@ public class NetUtils extends Handler{
             Log.d("gky", "wait 2000ms and send message:" + msgWhat + " again. (UUID:" + UUID + ")");
             sendEmptyMessageDelayed(msgWhat, 1500);
 
-            int packetLength = DATA_PACKET_TITLE_SIZE + 2;
-            SendRunnable SendRunnable = new SendRunnable(buffer, packetLength, ipClient);
+            SendRunnable SendRunnable = new SendRunnable(buffer, 12, ipClient);
             mPool.submit(SendRunnable);
 
-            BufferInfo info = new BufferInfo(buffer, packetLength, ipClient);
+            BufferInfo info = new BufferInfo(buffer, 12, ipClient);
             dataMap.put(UUID, info);
         }else {
             if (mHandler != null) {
@@ -198,6 +200,7 @@ public class NetUtils extends Handler{
         }
 
         int length = msg.getBytes().length;
+        int packetLength = DATA_PACKET_TITLE_SIZE + length;
         if (length > DATE_SEGMENT_LENGTH ) {
             if (mHandler != null) {
                 mHandler.sendEmptyMessage(ConfigConst.MSG_INVALIED_INPUT_TEXT);
@@ -205,6 +208,8 @@ public class NetUtils extends Handler{
             return;
         }
         byte[] data = getByteBuffer(NetConst.STTP_LOAD_TYPE_CMD_INPUT_TEXT,0,0);
+        data[8] = Integer.valueOf(packetLength & 0xFF).byteValue();
+        data[9] = Integer.valueOf((packetLength >> 8) & 0xFF).byteValue();
         ByteArrayInputStream byteArrayip = new ByteArrayInputStream(msg.getBytes());
         try {
             byteArrayip.read(data, DATA_SEGMENT_START_INDEX, length);
@@ -217,9 +222,14 @@ public class NetUtils extends Handler{
             return;
         }
 
-        int packetLength = DATA_PACKET_TITLE_SIZE + length;
         SendRunnable SendRunnable = new SendRunnable(data, packetLength, ipClient);
         mPool.submit(SendRunnable);
+
+        try {
+            Log.d("gky","send msg is "+new String(data,DATA_SEGMENT_START_INDEX,length,"utf-8"));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
     }
 
     public void sendVirtualMotionEvents(int dstX,int dstY, int type){
@@ -232,7 +242,8 @@ public class NetUtils extends Handler{
         }
 
         byte[] data = getByteBuffer(NetConst.STTP_LOAD_TYPE_CMD_VIRTUAL_MOUSE,0,0);
-
+        data[8] = Integer.valueOf(19 & 0xFF).byteValue();
+        data[9] = Integer.valueOf((19 >> 8) & 0xFF).byteValue();
         data[DATA_SEGMENT_START_INDEX] = Integer.valueOf(dstX & 0xFF).byteValue();
         data[DATA_SEGMENT_START_INDEX + 1] = Integer.valueOf((dstX >> 8) & 0xFF).byteValue();
         data[DATA_SEGMENT_START_INDEX + 2] = Integer.valueOf((dstX >> 16) & 0xFF).byteValue();
@@ -245,8 +256,7 @@ public class NetUtils extends Handler{
 
         data[DATA_SEGMENT_START_INDEX + 8] = Integer.valueOf(type & 0xFF).byteValue();
 
-        int packetLength = DATA_PACKET_TITLE_SIZE + 9;
-        SendRunnable SendRunnable = new SendRunnable(data, packetLength, ipClient);
+        SendRunnable SendRunnable = new SendRunnable(data, 19, ipClient);
         mPool.submit(SendRunnable);
     }
 
@@ -281,10 +291,11 @@ public class NetUtils extends Handler{
         int load_type = buffer[1] & 0x7F;
         int receive_flag = (buffer[1] & 0x80) >> 7;
         int sn = (buffer[2] & 0xFF) | ((buffer[3] & 0xFF) << 8);
-        Log.d("gky", "parseReceiveBuffer::version[" + version + "] deviceId[" + deviceId
-                + "] load_type[" + load_type + "] SN[" + sn + "] receive_flag[" + receive_flag + "]");
-
         int UUID = buffer[4] & 0xFF;
+        int packetLength = (buffer[8] & 0xFF) | ((buffer[9] & 0xFF) << 8);
+        Log.d("gky", "parseReceiveBuffer::version[" + version + "] deviceId[" + deviceId
+                + "] load_type[" + load_type + "] SN[" + sn + "] receive_flag["
+                + receive_flag + "] UUID["+UUID+"] packetLength["+packetLength+"]");
 
         if (dataMap.size() != 0) {
             if (dataMap.containsKey(UUID) && deviceId == DEVICE_TYPE_PHONE) {
@@ -314,7 +325,7 @@ public class NetUtils extends Handler{
         if (load_type == NetConst.STTP_LOAD_TYPE_REQUEST_CONNECTION && deviceId == DEVICE_TYPE_TV) {
             String ip = datagramPacket.getAddress().getHostAddress();
             if (ipList != null && !ipList.contains(ip)) {
-                int length = datagramPacket.getLength() - DATA_PACKET_TITLE_SIZE;
+                int length = packetLength - DATA_PACKET_TITLE_SIZE;
                 String deviceName = new String(buffer, DATA_SEGMENT_START_INDEX, length,"utf-8");
                 Log.i("gky", "REVEIVE CONNECTION FROM " + deviceName + "[" + ip + "]");
                 if (ipClient == null) {
@@ -356,6 +367,8 @@ public class NetUtils extends Handler{
                 Log.i("gky", "WHAT_CHECKOUT_DEVICE_STATUS_REMOTE");
                 for (String ip : ipList) {
                     byte[] buffer = getByteBuffer(NetConst.STTP_LOAD_TYPE_REQUEST_CONNECTSTATUS, 0, 1);
+                    buffer[8] = Integer.valueOf(DATA_PACKET_TITLE_SIZE & 0xFF).byteValue();
+                    buffer[9] = Integer.valueOf((DATA_PACKET_TITLE_SIZE >> 8) & 0xFF).byteValue();
                     SendRunnable SendRunnable = new SendRunnable(buffer, DATA_PACKET_TITLE_SIZE, ip);
                     mPool.submit(SendRunnable);
 
@@ -459,10 +472,12 @@ public class NetUtils extends Handler{
                 byte[] buffer = getByteBuffer(NetConst.STTP_LOAD_TYPE_BROADCAST,0,0);
                 int length = Build.PRODUCT.getBytes().length;
                 ByteArrayInputStream bip = new ByteArrayInputStream(Build.PRODUCT.getBytes());
-                bip.read(buffer, 8, length);
+                bip.read(buffer, DATA_SEGMENT_START_INDEX, length);
                 bip.close();
 
                 int packetLength = DATA_PACKET_TITLE_SIZE + length;
+                buffer[8] = Integer.valueOf(packetLength & 0xFF).byteValue();
+                buffer[9] = Integer.valueOf((packetLength >> 8) & 0xFF).byteValue();
                 DatagramPacket datagramPacket = new DatagramPacket(buffer,packetLength,
                         InetAddress.getByName(broadcastIp),BROADCAST_PORT);
                 boolean flag = false;

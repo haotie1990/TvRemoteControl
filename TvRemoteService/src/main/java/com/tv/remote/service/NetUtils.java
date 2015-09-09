@@ -68,9 +68,9 @@ public class NetUtils {
 
     public static final int NEED_REPLY = 1;
 
-    private static final int DATA_PACKET_TITLE_SIZE = 8;
+    private static final int DATA_PACKET_TITLE_SIZE = 10;
     private static final int DATA_PACKET_SIZE = 1400;
-    private static final int DATA_PACKET_BODY_INDEX = 8;
+    private static final int DATA_PACKET_BODY_INDEX = 10;
 
     private static NetUtils instance = null;
 
@@ -182,8 +182,8 @@ public class NetUtils {
         }
 
         if (load_type == STTP_LOAD_TYPE_IR_KEY && deviceId == 55) {
-            int keyCode = buffer[8] & 0xFF;
-            int longKeyState = buffer[9] & 0xFF;
+            int keyCode = buffer[DATA_PACKET_BODY_INDEX] & 0xFF;
+            int longKeyState = buffer[DATA_PACKET_BODY_INDEX+1] & 0xFF;
             Log.i("gky", "KeyCode[" + keyCode + "] isLongKey[" + (longKeyState != 0 ? "true" : "false") + "]");
 
             if (longKeyState == NORMAL_KEY) {/*短按键直接注入键值*/
@@ -208,9 +208,8 @@ public class NetUtils {
         } else if (load_type == STTP_LOAD_TYPE_BROADCAST && deviceId == 55) {
             try {
                 String ip = datagramPacket.getAddress().getHostAddress();
-                int dataLength = datagramPacket.getLength() - DATA_PACKET_TITLE_SIZE;
-                Log.i("gky","dataLength: "+dataLength);
-                String deviceName = new String(buffer, 8, dataLength, "utf-8");
+                int length = ((buffer[8] & 0xFF) | ((buffer[9] & 0xFF) << 8)) - DATA_PACKET_TITLE_SIZE;
+                String deviceName = new String(buffer, DATA_PACKET_BODY_INDEX, length, "utf-8");
                 if (ipDevMap != null && !ipDevMap.containsKey(ip)) {
                     if (!deviceName.equals("")) {
                         ipDevMap.put(ip, deviceName);
@@ -223,8 +222,11 @@ public class NetUtils {
                 byte[] sendBuffer = getByteBuffer(STTP_LOAD_TYPE_REQUEST_CONNECTION, 0, 0);
                 try {
                     int nameLength = Build.PRODUCT.getBytes().length;
+                    int packetLength = nameLength + DATA_PACKET_TITLE_SIZE;
+                    sendBuffer[8] = Integer.valueOf(packetLength & 0xFF).byteValue();
+                    sendBuffer[9] = Integer.valueOf((packetLength >> 8) & 0xFF).byteValue();
                     ByteArrayInputStream bip = new ByteArrayInputStream(Build.PRODUCT.getBytes());
-                    bip.read(sendBuffer, 8, nameLength);
+                    bip.read(sendBuffer, DATA_PACKET_BODY_INDEX, nameLength);
                     bip.close();
                     send(sendBuffer, nameLength, ip);
                 } catch (IOException e) {
@@ -232,11 +234,12 @@ public class NetUtils {
                 }
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
+                Log.e("gky","error is "+e.toString());
             }
         } else if (load_type == STTP_LOAD_TYPE_CMD_INPUT_TEXT) {
             try {
-                int length = datagramPacket.getLength() - DATA_PACKET_TITLE_SIZE;
-                String text = new String(buffer, 8, length, "utf-8");
+                int length = ((buffer[8] & 0xFF) | ((buffer[9] & 0xFF) << 8)) - DATA_PACKET_TITLE_SIZE;
+                String text = new String(buffer, DATA_PACKET_BODY_INDEX, length, "utf-8");
                 Log.i("gky", "receive Message text:" + text);
 
                 try {
@@ -253,11 +256,11 @@ public class NetUtils {
                 e.printStackTrace();
             }
         } else if (load_type == STTP_LOAD_TYPE_CMD_VIRTUAL_MOUSE && deviceId == 55) {
-            int x = (buffer[8] & 0xFF) | ((buffer[9] & 0xFF) << 8)
-                    | ((buffer[10] & 0xFF) << 16) | ((buffer[11] & 0xFF) << 24);
-            int y = (buffer[12] & 0xFF) | ((buffer[13] & 0xFF) << 8)
-                    | ((buffer[14] & 0xFF) << 16) | ((buffer[15] & 0xFF) << 24);
-            int type = buffer[16] & 0xFF;
+            int x = (buffer[DATA_PACKET_BODY_INDEX] & 0xFF) | ((buffer[DATA_PACKET_BODY_INDEX+1] & 0xFF) << 8)
+                    | ((buffer[DATA_PACKET_BODY_INDEX+2] & 0xFF) << 16) | ((buffer[DATA_PACKET_BODY_INDEX+3] & 0xFF) << 24);
+            int y = (buffer[DATA_PACKET_BODY_INDEX+4] & 0xFF) | ((buffer[DATA_PACKET_BODY_INDEX+5] & 0xFF) << 8)
+                    | ((buffer[DATA_PACKET_BODY_INDEX+6] & 0xFF) << 16) | ((buffer[DATA_PACKET_BODY_INDEX+7] & 0xFF) << 24);
+            int type = buffer[DATA_PACKET_BODY_INDEX+8] & 0xFF;
             if (type == 0) {
                 MouseRunnale mouseRunnale = new MouseRunnale(new int[]{x, y});
                 mPool.submit(mouseRunnale);
@@ -324,7 +327,7 @@ public class NetUtils {
 
         @Override
         public void run() {
-            byte[] receiveBuffer = new byte[1400];
+            byte[] receiveBuffer = new byte[DATA_PACKET_SIZE];
             DatagramPacket datagramPacket = new DatagramPacket(receiveBuffer, receiveBuffer.length);
             try {
                 if (receiveSocket == null || receiveSocket.isClosed()) {
