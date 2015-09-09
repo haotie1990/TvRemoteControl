@@ -79,13 +79,13 @@ public class NetUtils {
     private IInputMethodManager mService;
 
     private volatile String ipClient = null;
-    private Map<String, String> ipDevMap = null;
+    private volatile Map<String, String> ipDevMap = null;
 
     private DatagramSocket receiveSocket = null;
     private DatagramSocket sendSocket = null;
 
-    private ReceiveRunnale receiveRunnale = null;
-    private LongKeyRunnale longKeyRunnale = null;
+    private volatile ReceiveRunnale receiveRunnale = null;
+    private volatile LongKeyRunnale longKeyRunnale = null;
 
     private Handler mHandler = null;
 
@@ -209,6 +209,7 @@ public class NetUtils {
             try {
                 String ip = datagramPacket.getAddress().getHostAddress();
                 int dataLength = datagramPacket.getLength() - DATA_PACKET_TITLE_SIZE;
+                Log.i("gky","dataLength: "+dataLength);
                 String deviceName = new String(buffer, 8, dataLength, "utf-8");
                 if (ipDevMap != null && !ipDevMap.containsKey(ip)) {
                     if (!deviceName.equals("")) {
@@ -334,8 +335,8 @@ public class NetUtils {
                 while (isFlag) {
                     Log.i("gky", "------------------enter loop and wait receive data---------------");
                     receiveSocket.receive(datagramPacket);
-                    parseReceiveBuffer(receiveBuffer, datagramPacket);
                     Log.e("gky", "reveive data from ------------->>" + datagramPacket.getAddress().getHostAddress());
+                    mPool.submit(new ParseRunnable(receiveBuffer, datagramPacket));
                 }
             } catch (SocketException e) {
                 Log.e("gky", getClass() + ":" + e.toString());
@@ -399,6 +400,24 @@ public class NetUtils {
                 bf = null;
                 sendSocket.close();
             }
+        }
+    }
+
+    public class ParseRunnable implements Runnable {
+
+        private byte[] data;
+        private DatagramPacket dataPacket;
+
+        public ParseRunnable(byte[] data, DatagramPacket dataPacket) {
+            this.data = data;
+            this.dataPacket = dataPacket;
+        }
+
+        @Override
+        public void run() {
+            Log.i("gky","~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+            parseReceiveBuffer(data, dataPacket);
+            Log.i("gky", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
         }
     }
 

@@ -57,8 +57,8 @@ public class NetUtils extends Handler{
     private static final int DEVICE_TYPE_TV = 56;
 
     private int UUIDCounter = 0;
-    private Map<Integer, BufferInfo> dataMap;
-    private Map<String, Integer> stateMap;
+    private volatile Map<Integer, BufferInfo> dataMap;
+    private volatile Map<String, Integer> stateMap;
 
     private Handler mHandler = null;
 
@@ -512,10 +512,10 @@ public class NetUtils extends Handler{
                     receiveSocket.bind(new InetSocketAddress(BROADCAST_PORT));
                 }
                 while (isFlag) {
-                    Log.d("gky", "---------->enter loop and wait receive data<----------");
+                    Log.d("gky", "------------>enter loop and wait receive data<----------");
                     receiveSocket.receive(datagramPacket);
                     Log.i("gky", "receive from: " + datagramPacket.getAddress().getHostAddress());
-                    parseReceiveBuffer(reviveBuffer, datagramPacket);
+                    mPool.submit(new ParseRunnable(reviveBuffer,datagramPacket));
                 }
             } catch (SocketException e) {
                 Log.e("gky",getClass()+":"+e.toString());
@@ -567,6 +567,26 @@ public class NetUtils extends Handler{
             } finally {
                 sendSocket.close();
                 sendSocket = null;
+            }
+        }
+    }
+
+    public class ParseRunnable implements Runnable {
+
+        private byte[] data;
+        private DatagramPacket dataPacket;
+
+        public ParseRunnable(byte[] data, DatagramPacket dataPacket) {
+            this.data = data;
+            this.dataPacket = dataPacket;
+        }
+
+        @Override
+        public void run() {
+            try {
+                parseReceiveBuffer(data,dataPacket);
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
             }
         }
     }
