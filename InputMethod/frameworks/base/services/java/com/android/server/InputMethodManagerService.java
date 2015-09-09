@@ -2310,6 +2310,26 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             Log.e(TAG, "mCurInputContext is null");
         }
     }
+
+    /*@Override
+    public void sendKeyEvent(int keyCode) throws RemoteException {
+        if (mCurInputContext != null) {
+            try {
+                long eventTime = SystemClock.uptimeMillis();
+                mCurInputContext.sendKeyEvent(new KeyEvent(eventTime, eventTime,
+                        KeyEvent.ACTION_DOWN, keyCode, 0, 0, KeyCharacterMap.VIRTUAL_KEYBOARD, 0,
+                        KeyEvent.FLAG_SOFT_KEYBOARD|KeyEvent.FLAG_KEEP_TOUCH_MODE));
+                mCurInputContext.sendKeyEvent(new KeyEvent(eventTime, SystemClock.uptimeMillis(),
+                        KeyEvent.ACTION_UP, keyCode, 0, 0, KeyCharacterMap.VIRTUAL_KEYBOARD, 0,
+                        KeyEvent.FLAG_SOFT_KEYBOARD|KeyEvent.FLAG_KEEP_TOUCH_MODE));
+            } catch (RemoteException e) {
+                Log.e(TAG, "setComposingTextToFocusView error: " + e);
+                e.printStackTrace();
+            }
+        } else {
+            Log.e(TAG, "mCurInputContext is null");
+        }
+    }*/
     //end by gengkaiyang
 
     @Override

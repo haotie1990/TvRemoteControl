@@ -79,5 +79,6 @@ interface IInputMethodManager {
     void sendContextToFocusView(String text);
     void deleteSurroundingText(int leftLength, int rightLength);
     void setComposingTextToFocusView(String text, int newCursorPosition);
+    //void sendKeyEvent(int keyCode);
     //end by gengkaiyang
 }

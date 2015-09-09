@@ -240,7 +240,7 @@ public class NetUtils {
 
                 try {
                     if (mService != null) {
-                        mService.sendContextToFocusView(text);
+                        mService.setComposingTextToFocusView(text,length);
                     } else {
                         Log.e("gky", "IInputMethodManagerService is null");
                     }

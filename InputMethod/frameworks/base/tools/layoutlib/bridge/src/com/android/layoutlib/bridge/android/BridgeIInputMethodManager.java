@@ -29,6 +29,8 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodSubtype;
 
+import java.lang.Override;
+import java.rmi.RemoteException;
 import java.util.List;
 
 /**
@@ -143,6 +145,11 @@ public class BridgeIInputMethodManager implements IInputMethodManager {
             throws RemoteException {
         // TODO Auto-generated method stub
     }
+
+    /*@Override
+    public void sendKeyEvent(int keyCode) throws RemoteException {
+        // TODO Auto-generated method stub
+    }*/
     //end by gengkaiyang
 
     @Override

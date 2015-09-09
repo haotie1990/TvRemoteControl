@@ -5,7 +5,9 @@ import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Vibrator;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -31,7 +33,7 @@ import butterknife.OnTouch;
  * Created by 凯阳 on 2015/8/6.
  */
 public class TvRemoteActivity extends BaseActivity
-        implements SendCommentButton.OnSendClickListener{
+        implements SendCommentButton.OnSendClickListener, TextWatcher, View.OnKeyListener{
 
     @InjectView(R.id.relativeLayout_navi)
     RelativeLayout relativeLayout_navi;
@@ -525,6 +527,8 @@ public class TvRemoteActivity extends BaseActivity
     }
 
     private void initSendCommentBtn() {
+        etComment.addTextChangedListener(this);
+        etComment.setOnKeyListener(this);
         if (btnSendComment != null) {
             btnSendComment.setOnSendClickListener(this);
         }
@@ -544,5 +548,24 @@ public class TvRemoteActivity extends BaseActivity
             return false;
         }
         return true;
+    }
+
+    @Override
+    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+    }
+
+    @Override
+    public void onTextChanged(CharSequence s, int start, int before, int count) {
+    }
+
+    @Override
+    public void afterTextChanged(Editable s) {
+        NetUtils.getInstance().sendMsg(s.toString());
+    }
+
+    @Override
+    public boolean onKey(View v, int keyCode, android.view.KeyEvent event) {
+        NetUtils.getInstance().sendKey(keyCode);
+        return false;
     }
 }
