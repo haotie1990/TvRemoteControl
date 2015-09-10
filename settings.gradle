@@ -1,1 +1,1 @@
-include ':app', ':TvRemoteService'
+include ':app', ':TvRemoteService', ':library'
