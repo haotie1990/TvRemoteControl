@@ -27,5 +27,4 @@ dependencies {
     compile 'com.jakewharton:butterknife:5.1.1'
     compile 'com.android.support:recyclerview-v7:22.2.0'
     compile files('libs/picasso-2.5.2.jar')
-    compile project(':library')
 }
