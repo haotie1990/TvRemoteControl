@@ -536,7 +536,7 @@ public class TvRemoteActivity extends BaseActivity
     @Override
     public void onSendClickListener(View v) {
         if (vallidateComment()) {
-            NetUtils.getInstance().sendMsg(etComment.getText().toString());
+            //NetUtils.getInstance().sendMsg(etComment.getText().toString());
             etComment.setText(null);
             btnSendComment.setCurrentState(SendCommentButton.STATE_DONE);
         }

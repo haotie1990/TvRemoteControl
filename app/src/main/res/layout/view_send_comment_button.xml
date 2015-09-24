@@ -6,7 +6,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"
-        android:text="SEND"
+        android:text="CLEAR"
         android:textColor="#ffffff"
         android:textSize="12sp" />
 
