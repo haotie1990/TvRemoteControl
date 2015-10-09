@@ -30,6 +30,7 @@ public class DevicesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     public DevicesAdapter() {
         mDevices = new ArrayList<>();
+        curDeviceInfo = null;
     }
 
     @Override
@@ -52,6 +53,9 @@ public class DevicesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     public void addItem(DeviceInfo deviceInfo) {
         if (!mDevices.contains(deviceInfo)) {
+            if (deviceInfo.isSelected) {
+                curDeviceInfo = deviceInfo;
+            }
             mDevices.add(deviceInfo);
             notifyItemInserted(mDevices.size() - 1);
         }else {
@@ -81,6 +85,10 @@ public class DevicesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             return removeItem(devInfo);
         }
         return null;
+    }
+
+    public DeviceInfo getCurDeviceInfo() {
+        return curDeviceInfo;
     }
 
     public void setOnItemClickListener(OnItemClickListener onItemClickListener) {
@@ -127,6 +135,7 @@ public class DevicesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 for (DeviceInfo deviceInfo : mDevices) {
                     if (NetUtils.getInstance().getIpClient().equals(deviceInfo.ip)) {
                         deviceInfo.isSelected = true;
+                        curDeviceInfo = deviceInfo;
                     }else {
                         deviceInfo.isSelected = false;
                     }

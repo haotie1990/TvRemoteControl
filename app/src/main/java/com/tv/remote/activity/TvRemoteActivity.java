@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -21,6 +22,7 @@ import com.tv.remote.R;
 import com.tv.remote.net.NetUtils;
 import com.tv.remote.utils.KeyEvent;
 import com.tv.remote.utils.Utils;
+import com.tv.remote.view.KeyBoardDialog;
 import com.tv.remote.view.SendCommentButton;
 import com.tv.remote.view.TouchPadView;
 
@@ -67,6 +69,8 @@ public class TvRemoteActivity extends BaseActivity
 
     private Vibrator vibrator;
 
+    private KeyBoardDialog keyBoardDialog = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -74,6 +78,7 @@ public class TvRemoteActivity extends BaseActivity
         setTitle(this.getClass().getSimpleName());
         vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
         curIndexID = relativeLayout_navi.getId();
+        keyBoardDialog = new KeyBoardDialog(this);
         initSendCommentBtn();
         add(this);
     }
@@ -408,6 +413,21 @@ public class TvRemoteActivity extends BaseActivity
                             relativeLayout_navi.setVisibility(View.GONE);
                             relativeLayout_msg.setTranslationX(0);
                             relativeLayout_msg.setVisibility(View.VISIBLE);
+                            /*if (getDevices().getCurDeviceInfo() != null
+                                    && getDevices().getCurDeviceInfo().type != 56) {
+                                etComment.setVisibility(View.GONE);
+                                btnSendComment.setVisibility(View.GONE);
+                                if (!keyBoardDialog.isShowing()) {
+                                    keyBoardDialog.show();
+                                }
+                            } else {
+                                if (keyBoardDialog.isShowing()) {
+                                    keyBoardDialog.dismiss();
+                                }
+                                etComment.setVisibility(View.VISIBLE);
+                                btnSendComment.setVisibility(View.VISIBLE);
+                                etComment.setInputType(InputType.TYPE_CLASS_TEXT);
+                            }*/
                             curIndexID = relativeLayout_msg.getId();
                         }
                     })
@@ -481,6 +501,21 @@ public class TvRemoteActivity extends BaseActivity
                                 relativeLayout_navi.setVisibility(View.GONE);
                                 relativeLayout_msg.setTranslationX(0);
                                 relativeLayout_msg.setVisibility(View.VISIBLE);
+                                /*if (getDevices().getCurDeviceInfo() != null
+                                        && getDevices().getCurDeviceInfo().type != 56) {
+                                    etComment.setVisibility(View.GONE);
+                                    btnSendComment.setVisibility(View.GONE);
+                                    if (!keyBoardDialog.isShowing()) {
+                                        keyBoardDialog.show();
+                                    }
+                                } else {
+                                    if (keyBoardDialog.isShowing()) {
+                                        keyBoardDialog.dismiss();
+                                    }
+                                    etComment.setVisibility(View.VISIBLE);
+                                    btnSendComment.setVisibility(View.VISIBLE);
+                                    etComment.setInputType(InputType.TYPE_CLASS_TEXT);
+                                }*/
                                 curIndexID = relativeLayout_msg.getId();
                             }
                         })
@@ -535,11 +570,13 @@ public class TvRemoteActivity extends BaseActivity
     }
     @Override
     public void onSendClickListener(View v) {
-        if (vallidateComment()) {
-            //NetUtils.getInstance().sendMsg(etComment.getText().toString());
+        if (!keyBoardDialog.isShowing()) {
+            keyBoardDialog.show();
+        }
+        /*if (vallidateComment()) {
             etComment.setText(null);
             btnSendComment.setCurrentState(SendCommentButton.STATE_DONE);
-        }
+        }*/
     }
 
     private boolean vallidateComment() {
@@ -552,19 +589,26 @@ public class TvRemoteActivity extends BaseActivity
 
     @Override
     public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+        Log.i("gky","beforeTextChanged------->"+s.toString());
     }
 
     @Override
     public void onTextChanged(CharSequence s, int start, int before, int count) {
+        Log.i("gky","onTextChanged------->"+s.toString());
     }
 
     @Override
     public void afterTextChanged(Editable s) {
-        NetUtils.getInstance().sendMsg(s.toString());
+        Log.i("gky","afterTextChanged------->"+s.toString());
+        if (getDevices().getCurDeviceInfo() != null
+                && getDevices().getCurDeviceInfo().type == 56) {
+            NetUtils.getInstance().sendMsg(s.toString());
+        }
     }
 
     @Override
     public boolean onKey(View v, int keyCode, android.view.KeyEvent event) {
+        Log.i("gky","onKey::event is "+event);
         NetUtils.getInstance().sendKey(keyCode);
         return false;
     }

@@ -54,7 +54,8 @@ public class NetUtils extends Handler{
     private static final int DELAY_CHECKOUT_TIME = 6 * 1000;
 
     private static final int DEVICE_TYPE_PHONE = 55;
-    private static final int DEVICE_TYPE_TV = 56;
+    private static final int DEVICE_TYPE_TV_ANDROID = 56;
+    private static final int DEVICE_TYPE_TV_LINUX = 57;
 
     private int UUIDCounter = 0;
     private volatile Map<Integer, BufferInfo> dataMap;
@@ -322,7 +323,8 @@ public class NetUtils extends Handler{
             }
         }
 
-        if (load_type == NetConst.STTP_LOAD_TYPE_REQUEST_CONNECTION && deviceId == DEVICE_TYPE_TV) {
+        if (load_type == NetConst.STTP_LOAD_TYPE_REQUEST_CONNECTION
+                && (deviceId == DEVICE_TYPE_TV_ANDROID || deviceId == DEVICE_TYPE_TV_LINUX)) {
             String ip = datagramPacket.getAddress().getHostAddress();
             if (ipList != null && !ipList.contains(ip)) {
                 int length = packetLength - DATA_PACKET_TITLE_SIZE;
@@ -335,17 +337,18 @@ public class NetUtils extends Handler{
                 stateMap.put(ip,0);
 
                 Message msg = mHandler.obtainMessage();
-                DeviceInfo deviceInfo = new DeviceInfo(ip, deviceName, true, ip.equals(ipClient));
+                DeviceInfo deviceInfo = new DeviceInfo(ip, deviceName, deviceId, true, ip.equals(ipClient));
                 msg.obj = deviceInfo;
                 msg.what = ConfigConst.MSG_FIND_OUT_DEVICE;
                 if (mHandler != null) {
                     mHandler.sendMessage(msg);
                 }
 
-                if (!hasMessages(WHAT_CHECKOUT_DEVICE_STATUS_REMOTE)) {
+                /*取消心跳包功能,此功能还需完善*/
+                /*if (!hasMessages(WHAT_CHECKOUT_DEVICE_STATUS_REMOTE)) {
                     sendEmptyMessageDelayed(WHAT_CHECKOUT_DEVICE_STATUS_REMOTE,
                             DELAY_CHECKOUT_TIME);
-                }
+                }*/
             }
         }
     }
