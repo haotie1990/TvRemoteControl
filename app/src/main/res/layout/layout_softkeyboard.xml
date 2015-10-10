@@ -11,60 +11,70 @@
         android:weightSum="1">
 
         <Button
+            android:id="@+id/btn_1"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="0.1"
             android:text="1" />
 
         <Button
+            android:id="@+id/btn_2"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="0.1"
             android:text="2" />
 
         <Button
+            android:id="@+id/btn_3"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="0.1"
             android:text="3" />
 
         <Button
+            android:id="@+id/btn_4"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="0.1"
             android:text="4" />
 
         <Button
+            android:id="@+id/btn_5"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="0.1"
             android:text="5" />
 
         <Button
+            android:id="@+id/btn_6"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="0.1"
             android:text="6" />
 
         <Button
+            android:id="@+id/btn_7"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="0.1"
             android:text="7" />
 
         <Button
+            android:id="@+id/btn_8"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="0.1"
             android:text="8" />
 
         <Button
+            android:id="@+id/btn_9"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="0.1"
             android:text="9" />
 
         <Button
+            android:id="@+id/btn_0"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="0.1"
@@ -76,64 +86,84 @@
         android:weightSum="10"
         android:orientation="horizontal">
         <Button
+            android:id="@+id/btn_q"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="q" />
+            android:text="q"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_w"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="w" />
+            android:text="w"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_e"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="e" />
+            android:text="e"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_r"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="r" />
+            android:text="r"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_t"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="t" />
+            android:text="t"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_y"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="y" />
+            android:text="y"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_u"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="u" />
+            android:text="u"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_i"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="i" />
+            android:text="i"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_o"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="o" />
+            android:text="o"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_p"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="p" />
+            android:text="p"
+            android:textAllCaps="false"/>
     </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
@@ -141,58 +171,76 @@
         android:orientation="horizontal"
         android:weightSum="9">
         <Button
+            android:id="@+id/btn_a"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="a" />
+            android:text="a"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_s"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="s" />
+            android:text="s"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_d"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="d" />
+            android:text="d"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_f"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="f" />
+            android:text="f"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_g"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="g" />
+            android:text="g"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_h"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="h" />
+            android:text="h"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_j"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="j" />
+            android:text="j"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_k"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="k" />
+            android:text="k"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_l"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="l" />
+            android:text="l"
+            android:textAllCaps="false"/>
     </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
@@ -200,64 +248,76 @@
         android:orientation="horizontal"
         android:weightSum="12">
         <Button
+            android:id="@+id/btn_shift"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="2"
-            android:text="↑" />
+            android:text="↑"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_z"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="z" />
+            android:text="z"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_x"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="x" />
+            android:text="x"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_c"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="c" />
+            android:text="c"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_v"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="v" />
+            android:text="v"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_b"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="v" />
+            android:text="b"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_n"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="b" />
+            android:text="n"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_m"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="n" />
+            android:text="m"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_del"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="m" />
-
-        <Button
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="2"
-            android:text="DEL" />
+            android:layout_weight="3"
+            android:text="Del"
+            android:textAllCaps="false"/>
     </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
@@ -265,42 +325,55 @@
         android:orientation="horizontal"
         android:weightSum="14">
         <Button
+            android:id="@+id/btn_symbol"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="2"
-            android:text="~*" />
+            android:text="~*"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_number"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="2"
-            android:text="123" />
+            android:text="123"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_comma"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="," />
+            android:text=","
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_space"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="4"
-            android:text="Space" />
+            android:text="Space"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_period"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="." />
+            android:text="."
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_enter"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="3"
-            android:text="ENTER" />
+            android:text="Enter"
+            android:textAllCaps="false"/>
 
         <Button
+            android:id="@+id/btn_hide"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"

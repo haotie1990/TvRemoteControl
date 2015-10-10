@@ -265,6 +265,49 @@ public class NetUtils extends Handler{
         String fileName = filePath.substring(filePath.lastIndexOf("/"), 1);
     }
 
+    public void sendKeyText(String keyText) {
+        Log.i("gky","sendKeyText::"+keyText);
+
+        if (ipClient == null) {
+            if (mHandler != null) {
+                mHandler.sendEmptyMessage(ConfigConst.MSG_DISCONNECTION);
+            }
+            return;
+        }
+
+        byte[] data = getByteBuffer(NetConst.STTP_LOAD_TYPE_CMD_KEYBOARD_TEXT,0,0);
+        int length = keyText.getBytes().length;
+        int packetLength = length + DATA_PACKET_TITLE_SIZE;
+        data[8] = Integer.valueOf(packetLength & 0xFF).byteValue();
+        data[9] = Integer.valueOf((packetLength >> 8) & 0xFF).byteValue();
+        ByteArrayInputStream byteArrayip = new ByteArrayInputStream(keyText.getBytes());
+        try {
+            byteArrayip.read(data, DATA_SEGMENT_START_INDEX, length);
+            byteArrayip.close();
+        }catch (IOException e) {
+            e.printStackTrace();
+        }
+        SendRunnable SendRunnable = new SendRunnable(data, packetLength, ipClient);
+        mPool.submit(SendRunnable);
+    }
+
+    public void sendFunKey(int keyCode) {
+
+        if (ipClient == null) {
+            if (mHandler != null) {
+                mHandler.sendEmptyMessage(ConfigConst.MSG_DISCONNECTION);
+            }
+            return;
+        }
+        byte[] data = getByteBuffer(NetConst.STTP_LOAD_TYPE_CMD_KEYBOARD_FUNKEY,0,0);
+        data[8] = Integer.valueOf(11 & 0xFF).byteValue();
+        data[9] = Integer.valueOf((11 >> 8) & 0xFF).byteValue();
+        data[DATA_SEGMENT_START_INDEX] = Integer.valueOf(keyCode & 0xFF).byteValue();
+        SendRunnable SendRunnable = new SendRunnable(data, 11, ipClient);
+        mPool.submit(SendRunnable);
+    }
+
+
     public byte[] getByteBuffer(int load_type, int sn, int receive_flag) {
         byte[] buffer = new byte[1400];
 

@@ -27,6 +27,10 @@ public class NetConst {
 
     public static final int STTP_LOAD_TYPE_CMD_MUSIC = 58;
 
+    public static final int STTP_LOAD_TYPE_CMD_KEYBOARD_TEXT = 59;
+
+    public static final int STTP_LOAD_TYPE_CMD_KEYBOARD_FUNKEY = 60;
+
     /*54~72预留添加更多的命令*/
 
     public static final int STTP_LOAD_TYPE_CMD_XXX = 73;
