@@ -570,13 +570,10 @@ public class TvRemoteActivity extends BaseActivity
     }
     @Override
     public void onSendClickListener(View v) {
-        if (!keyBoardDialog.isShowing()) {
-            keyBoardDialog.show();
-        }
-        /*if (vallidateComment()) {
+        if (vallidateComment()) {
             etComment.setText(null);
             btnSendComment.setCurrentState(SendCommentButton.STATE_DONE);
-        }*/
+        }
     }
 
     private boolean vallidateComment() {
