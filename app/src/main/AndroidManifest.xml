@@ -36,6 +36,10 @@
         <activity android:name=".activity.TvDevicesActivity"
             android:launchMode="singleTask"
             android:screenOrientation="portrait"/>
+
+        <activity android:name=".activity.AboutActivity"
+            android:launchMode="singleTask"
+            android:screenOrientation="portrait"/>
     </application>
 
 </manifest>

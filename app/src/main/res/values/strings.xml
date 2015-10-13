@@ -28,4 +28,7 @@
         <item>n</item>
         <item>m</item>
     </array>
+
+    <string name="str_about">\t\tThe TvRemoteApp connect to TV with WIFI.It can control the TV(etc.Volumeup)
+        It also can send Message to the TV.</string>
 </resources>

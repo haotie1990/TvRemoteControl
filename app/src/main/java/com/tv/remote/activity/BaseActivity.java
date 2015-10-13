@@ -168,7 +168,7 @@ public abstract class BaseActivity extends AppCompatActivity
         Log.i("gky",getClass().getSimpleName()+"::onItemClick position:"+position+" curActivity:"+getActivityBySuper().getTitle());
         drawerLayout.closeDrawer(Gravity.LEFT);
         if (position == 1
-                && !getActivityBySuper().getTitle().equals(TvRemoteActivity.class.getSimpleName())) {/*TvRemoteActivity*/
+                && !getActivityBySuper().getTitle().equals(TvRemoteActivity.class.getSimpleName())) {
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
@@ -179,22 +179,33 @@ public abstract class BaseActivity extends AppCompatActivity
                 }
             },200);
         }else if (position == 2
-                && !getActivityBySuper().getTitle().equals(TvCommentsActivity.class.getSimpleName())) {/*TvCommentsActivity*/
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    Intent intent = new Intent(getActivityBySuper(), TvCommentsActivity.class);
-                    getActivityBySuper().startActivity(intent);
-                    getActivityBySuper().overridePendingTransition(0, 0);
-                    getActivityBySuper().finish();
-                }
-            },200);
-        }else if (position == 3
                 && !getActivityBySuper().getTitle().equals(TvDevicesActivity.class.getSimpleName())) {
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     Intent intent = new Intent(getActivityBySuper(), TvDevicesActivity.class);
+                    getActivityBySuper().startActivity(intent);
+                    getActivityBySuper().overridePendingTransition(0, 0);
+                    getActivityBySuper().finish();
+                }
+            },200);
+        }/*else if (position == 3
+                && !getActivityBySuper().getTitle().equals(TvDevicesActivity.class.getSimpleName())) {
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    Intent intent = new Intent(getActivityBySuper(), TvDevicesActivity.class);
+                    getActivityBySuper().startActivity(intent);
+                    getActivityBySuper().overridePendingTransition(0, 0);
+                    getActivityBySuper().finish();
+                }
+            },200);
+        }*/else if(position == 4
+                && !getActivityBySuper().getTitle().equals(AboutActivity.class.getSimpleName())) {
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    Intent intent = new Intent(getActivityBySuper(), AboutActivity.class);
                     getActivityBySuper().startActivity(intent);
                     getActivityBySuper().overridePendingTransition(0, 0);
                     getActivityBySuper().finish();
