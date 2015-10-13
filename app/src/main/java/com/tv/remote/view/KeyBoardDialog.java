@@ -3,6 +3,7 @@ package com.tv.remote.view;
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -118,6 +119,7 @@ public class KeyBoardDialog extends Dialog{
 
     private boolean isSymbol = false;
     private boolean isShift = false;
+    private boolean isNumOrSymbol = false;
     private String[] alphabet;
 
     public KeyBoardDialog(Context context) {
@@ -178,65 +180,127 @@ public class KeyBoardDialog extends Dialog{
 
     @OnClick(R.id.btn_shift)
     public void onClickShift() {
-        if (isSymbol) return;
-        NetUtils.getInstance().sendFunKey(1);
-        isShift = !isShift;
-        if (isShift) {
-            btn_shift.setTextColor(Color.BLUE);
-            btn_q.setText("Q");
-            btn_w.setText("W");
-            btn_e.setText("E");
-            btn_r.setText("R");
-            btn_t.setText("T");
-            btn_y.setText("Y");
-            btn_u.setText("U");
-            btn_i.setText("I");
-            btn_o.setText("O");
-            btn_p.setText("P");
-            btn_a.setText("A");
-            btn_s.setText("S");
-            btn_d.setText("D");
-            btn_f.setText("F");
-            btn_g.setText("G");
-            btn_h.setText("H");
-            btn_j.setText("J");
-            btn_k.setText("K");
-            btn_l.setText("L");
-            btn_z.setText("Z");
-            btn_x.setText("X");
-            btn_c.setText("C");
-            btn_v.setText("V");
-            btn_b.setText("B");
-            btn_n.setText("N");
-            btn_m.setText("M");
+        if (isSymbol) {
+            isShift = !isShift;
+            if (isShift) {
+                btn_shift.setText("≠");
+                btn_q.setText("*");
+                btn_w.setText("/");
+                btn_e.setText("+");
+                btn_r.setText("-");
+                btn_t.setText("=");
+                btn_y.setText("<");
+                btn_u.setText(">");
+                btn_i.setText("$");
+                btn_o.setText("{}");
+                btn_p.setText("[]");
+                btn_a.setText(";");
+                btn_s.setText(":");
+                btn_d.setText("@");
+                btn_f.setText("~");
+                btn_g.setText("%");
+                btn_h.setText("#");
+                btn_j.setText("\"");
+                btn_k.setText("()");
+                btn_l.setText("'");
+                btn_z.setText("^");
+                btn_x.setText("_");
+                btn_c.setText("...");
+                btn_v.setText("!");
+                btn_b.setText("?");
+                btn_n.setText("&");
+                btn_m.setText("\\");
+            }else {
+                btn_shift.setText("#~");
+                btn_q.setText("≈");
+                btn_w.setText("±");
+                btn_e.setText("℃");
+                btn_r.setText("℉");
+                btn_t.setText("→");
+                btn_y.setText("←");
+                btn_u.setText("♀");
+                btn_i.setText("♂");
+                btn_o.setText("®");
+                btn_p.setText("™");
+                btn_a.setText("©");
+                btn_s.setText("卍");
+                btn_d.setText("㈱");
+                btn_f.setText("√");
+                btn_g.setText("×");
+                btn_h.setText("#");
+                btn_j.setText("\"");
+                btn_k.setText("()");
+                btn_l.setText("·");
+                btn_z.setText("^");
+                btn_x.setText("ˇ");
+                btn_c.setText("¦");
+                btn_v.setText("!");
+                btn_b.setText("?");
+                btn_n.setText("&");
+                btn_m.setText("\\");
+            }
         }else {
-            btn_shift.setTextColor(Color.BLACK);
-            btn_q.setText(alphabet[0]);
-            btn_w.setText(alphabet[1]);
-            btn_e.setText(alphabet[2]);
-            btn_r.setText(alphabet[3]);
-            btn_t.setText(alphabet[4]);
-            btn_y.setText(alphabet[5]);
-            btn_u.setText(alphabet[6]);
-            btn_i.setText(alphabet[7]);
-            btn_o.setText(alphabet[8]);
-            btn_p.setText(alphabet[9]);
-            btn_a.setText(alphabet[10]);
-            btn_s.setText(alphabet[11]);
-            btn_d.setText(alphabet[12]);
-            btn_f.setText(alphabet[13]);
-            btn_g.setText(alphabet[14]);
-            btn_h.setText(alphabet[15]);
-            btn_j.setText(alphabet[16]);
-            btn_k.setText(alphabet[17]);
-            btn_l.setText(alphabet[18]);
-            btn_z.setText(alphabet[19]);
-            btn_x.setText(alphabet[20]);
-            btn_c.setText(alphabet[21]);
-            btn_v.setText(alphabet[22]);
-            btn_b.setText(alphabet[23]);
-            btn_n.setText(alphabet[24]);
-            btn_m.setText(alphabet[25]);
+            NetUtils.getInstance().sendFunKey(1);
+            isShift = !isShift;
+            if (isShift) {
+                btn_shift.setText("⇧");
+                btn_shift.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
+                btn_q.setText("Q");
+                btn_w.setText("W");
+                btn_e.setText("E");
+                btn_r.setText("R");
+                btn_t.setText("T");
+                btn_y.setText("Y");
+                btn_u.setText("U");
+                btn_i.setText("I");
+                btn_o.setText("O");
+                btn_p.setText("P");
+                btn_a.setText("A");
+                btn_s.setText("S");
+                btn_d.setText("D");
+                btn_f.setText("F");
+                btn_g.setText("G");
+                btn_h.setText("H");
+                btn_j.setText("J");
+                btn_k.setText("K");
+                btn_l.setText("L");
+                btn_z.setText("Z");
+                btn_x.setText("X");
+                btn_c.setText("C");
+                btn_v.setText("V");
+                btn_b.setText("B");
+                btn_n.setText("N");
+                btn_m.setText("M");
+            } else {
+                btn_shift.setText("⇧");
+                btn_shift.setTypeface(Typeface.DEFAULT,Typeface.NORMAL);
+                btn_q.setText(alphabet[0]);
+                btn_w.setText(alphabet[1]);
+                btn_e.setText(alphabet[2]);
+                btn_r.setText(alphabet[3]);
+                btn_t.setText(alphabet[4]);
+                btn_y.setText(alphabet[5]);
+                btn_u.setText(alphabet[6]);
+                btn_i.setText(alphabet[7]);
+                btn_o.setText(alphabet[8]);
+                btn_p.setText(alphabet[9]);
+                btn_a.setText(alphabet[10]);
+                btn_s.setText(alphabet[11]);
+                btn_d.setText(alphabet[12]);
+                btn_f.setText(alphabet[13]);
+                btn_g.setText(alphabet[14]);
+                btn_h.setText(alphabet[15]);
+                btn_j.setText(alphabet[16]);
+                btn_k.setText(alphabet[17]);
+                btn_l.setText(alphabet[18]);
+                btn_z.setText(alphabet[19]);
+                btn_x.setText(alphabet[20]);
+                btn_c.setText(alphabet[21]);
+                btn_v.setText(alphabet[22]);
+                btn_b.setText(alphabet[23]);
+                btn_n.setText(alphabet[24]);
+                btn_m.setText(alphabet[25]);
+            }
         }
     }
 
@@ -250,8 +314,9 @@ public class KeyBoardDialog extends Dialog{
         isSymbol = !isSymbol;
         if (isSymbol) {
             btn_symbol.setText("abc");
+            btn_shift.setText("≠");
             btn_shift.setTextColor(Color.BLACK);
-            isShift = false;
+            isShift = true;
             btn_q.setText("*");
             btn_w.setText("/");
             btn_e.setText("+");
@@ -259,7 +324,7 @@ public class KeyBoardDialog extends Dialog{
             btn_t.setText("=");
             btn_y.setText("<");
             btn_u.setText(">");
-            btn_i.setText("《》");
+            btn_i.setText("$");
             btn_o.setText("{}");
             btn_p.setText("[]");
             btn_a.setText(";");
@@ -271,7 +336,7 @@ public class KeyBoardDialog extends Dialog{
             btn_j.setText("\"");
             btn_k.setText("()");
             btn_l.setText("'");
-            btn_z.setText("——");
+            btn_z.setText("^");
             btn_x.setText("_");
             btn_c.setText("...");
             btn_v.setText("!");
@@ -280,6 +345,8 @@ public class KeyBoardDialog extends Dialog{
             btn_m.setText("\\");
         } else {
             btn_symbol.setText("~*");
+            btn_shift.setText("⇧");
+            isShift = false;
             btn_q.setText("q");
             btn_w.setText("w");
             btn_e.setText("e");
@@ -324,5 +391,20 @@ public class KeyBoardDialog extends Dialog{
         if (this.isShowing()) {
             this.dismiss();
         }
+    }
+
+    @OnClick(R.id.btn_comma)
+    public void onClickComma() {
+        NetUtils.getInstance().sendKeyText(",");
+    }
+
+    @OnClick(R.id.btn_period)
+    public void onClickPeriod() {
+        NetUtils.getInstance().sendKeyText(".");
+    }
+
+    @OnClick(R.id.btn_number)
+    public void onClickNumberOrSymbol() {
+
     }
 }

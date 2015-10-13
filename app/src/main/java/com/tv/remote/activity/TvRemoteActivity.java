@@ -413,7 +413,7 @@ public class TvRemoteActivity extends BaseActivity
                             relativeLayout_navi.setVisibility(View.GONE);
                             relativeLayout_msg.setTranslationX(0);
                             relativeLayout_msg.setVisibility(View.VISIBLE);
-                            /*if (getDevices().getCurDeviceInfo() != null
+                            if (getDevices().getCurDeviceInfo() != null
                                     && getDevices().getCurDeviceInfo().type != 56) {
                                 etComment.setVisibility(View.GONE);
                                 btnSendComment.setVisibility(View.GONE);
@@ -427,7 +427,7 @@ public class TvRemoteActivity extends BaseActivity
                                 etComment.setVisibility(View.VISIBLE);
                                 btnSendComment.setVisibility(View.VISIBLE);
                                 etComment.setInputType(InputType.TYPE_CLASS_TEXT);
-                            }*/
+                            }
                             curIndexID = relativeLayout_msg.getId();
                         }
                     })
@@ -501,7 +501,7 @@ public class TvRemoteActivity extends BaseActivity
                                 relativeLayout_navi.setVisibility(View.GONE);
                                 relativeLayout_msg.setTranslationX(0);
                                 relativeLayout_msg.setVisibility(View.VISIBLE);
-                                /*if (getDevices().getCurDeviceInfo() != null
+                                if (getDevices().getCurDeviceInfo() != null
                                         && getDevices().getCurDeviceInfo().type != 56) {
                                     etComment.setVisibility(View.GONE);
                                     btnSendComment.setVisibility(View.GONE);
@@ -515,7 +515,7 @@ public class TvRemoteActivity extends BaseActivity
                                     etComment.setVisibility(View.VISIBLE);
                                     btnSendComment.setVisibility(View.VISIBLE);
                                     etComment.setInputType(InputType.TYPE_CLASS_TEXT);
-                                }*/
+                                }
                                 curIndexID = relativeLayout_msg.getId();
                             }
                         })
