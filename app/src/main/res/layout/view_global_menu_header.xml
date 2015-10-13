@@ -20,18 +20,18 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_weight="1"
-            android:text="FireG"
+            android:text="TvRemoteApp"
             android:textColor="@color/style_color_primary"
             android:textSize="16sp"
             android:textStyle="bold"/>
 
-        <ImageButton
+        <!--<ImageButton
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_margin="16dp"
             android:background="@android:color/transparent"
-            android:src="@drawable/ic_global_menu_search"/>
+            android:src="@drawable/ic_global_menu_search"/>-->
     </LinearLayout>
 
     <View
