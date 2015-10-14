@@ -65,11 +65,16 @@ public class TvRemoteActivity extends BaseActivity
     ImageButton btn_n_right;
 
     private int curIndexID;
+    private int curIndex = 0;
+    private int preIndex = 0;
     private boolean longPressState = false;
 
     private Vibrator vibrator;
 
     private KeyBoardDialog keyBoardDialog = null;
+
+    private int[] listRes = {R.id.relativeLayout_navi, R.id.relativeLayout_num,
+            R.id.relativeLayout_msg, R.id.relativeLayout_touchpad};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -366,7 +371,28 @@ public class TvRemoteActivity extends BaseActivity
 
     private void runAnimationSwitchLeft() {
         Log.i("gky", "runAnimationSwitch");
-        if (curIndexID == relativeLayout_navi.getId()) {
+        preIndex = curIndex;
+        curIndex = --curIndex < 0 ? 3:curIndex;
+        curIndexID = listRes[curIndex];
+        findViewById(listRes[preIndex]).animate()
+                .translationX(-Utils.getScreenWidth(this))
+                .setDuration(300)
+                .setInterpolator(new AccelerateInterpolator())
+                .setListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        for (int resId : listRes) {
+                            if (resId != curIndexID) {
+                                findViewById(resId).setVisibility(View.GONE);
+                            }
+                        }
+                        findViewById(curIndexID).setTranslationX(0);
+                        findViewById(curIndexID).setVisibility(View.VISIBLE);
+                    }
+                })
+                .start();
+
+        /*if (curIndexID == relativeLayout_navi.getId()) {
             relativeLayout_navi.animate()
                     .translationX(-Utils.getScreenWidth(this))
                     .setDuration(300)
@@ -413,7 +439,7 @@ public class TvRemoteActivity extends BaseActivity
                             relativeLayout_navi.setVisibility(View.GONE);
                             relativeLayout_msg.setTranslationX(0);
                             relativeLayout_msg.setVisibility(View.VISIBLE);
-                            /*if (getDevices().getCurDeviceInfo() != null
+                            if (getDevices().getCurDeviceInfo() != null
                                     && getDevices().getCurDeviceInfo().type != 56) {
                                 etComment.setVisibility(View.GONE);
                                 btnSendComment.setVisibility(View.GONE);
@@ -427,7 +453,7 @@ public class TvRemoteActivity extends BaseActivity
                                 etComment.setVisibility(View.VISIBLE);
                                 btnSendComment.setVisibility(View.VISIBLE);
                                 etComment.setInputType(InputType.TYPE_CLASS_TEXT);
-                            }*/
+                            }
                             curIndexID = relativeLayout_msg.getId();
                         }
                     })
@@ -449,59 +475,80 @@ public class TvRemoteActivity extends BaseActivity
                         }
                     })
                     .start();
-        }
+        }*/
     }
 
     private void runAnimationSwitchRight() {
-            Log.i("gky", "runAnimationSwitchRight");
-            if (curIndexID == relativeLayout_navi.getId()) {
-                relativeLayout_navi.animate()
-                        .translationX(Utils.getScreenWidth(this))
-                        .setDuration(300)
-                        .setInterpolator(new AccelerateInterpolator())
-                        .setListener(new AnimatorListenerAdapter() {
-                            @Override
-                            public void onAnimationEnd(Animator animation) {
-                                relativeLayout_navi.setVisibility(View.GONE);
-                                relativeLayout_touchpad.setVisibility(View.GONE);
-                                relativeLayout_msg.setVisibility(View.GONE);
-                                relativeLayout_num.setTranslationX(0);
-                                relativeLayout_num.setVisibility(View.VISIBLE);
-                                curIndexID = relativeLayout_num.getId();
+        Log.i("gky", "runAnimationSwitchRight");
+        preIndex = curIndex;
+        curIndex = ++curIndex > 3 ? 0:curIndex;
+        curIndexID = listRes[curIndex];
+        findViewById(listRes[preIndex]).animate()
+                .translationX(-Utils.getScreenWidth(this))
+                .setDuration(300)
+                .setInterpolator(new AccelerateInterpolator())
+                .setListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        for (int resId : listRes) {
+                            if (resId != curIndexID) {
+                                findViewById(resId).setVisibility(View.GONE);
                             }
-                        })
-                        .start();
-            }else if (curIndexID == relativeLayout_num.getId()) {
-                relativeLayout_num.animate()
-                        .translationX(Utils.getScreenWidth(this))
-                        .setDuration(300)
-                        .setInterpolator(new AccelerateInterpolator())
-                        .setListener(new AnimatorListenerAdapter() {
-                            @Override
-                            public void onAnimationEnd(Animator animation) {
-                                relativeLayout_num.setVisibility(View.GONE);
-                                relativeLayout_navi.setVisibility(View.GONE);
-                                relativeLayout_msg.setVisibility(View.GONE);
-                                relativeLayout_touchpad.setTranslationX(0);
-                                relativeLayout_touchpad.setVisibility(View.VISIBLE);
-                                curIndexID = relativeLayout_touchpad.getId();
-                            }
-                        })
-                        .start();
-            }else if (curIndexID == relativeLayout_touchpad.getId()) {
-                relativeLayout_touchpad.animate()
-                        .translationX(Utils.getScreenWidth(this))
-                        .setDuration(300)
-                        .setInterpolator(new AccelerateInterpolator())
-                        .setListener(new AnimatorListenerAdapter() {
-                            @Override
-                            public void onAnimationEnd(Animator animation) {
-                                relativeLayout_num.setVisibility(View.GONE);
-                                relativeLayout_touchpad.setVisibility(View.GONE);
-                                relativeLayout_navi.setVisibility(View.GONE);
-                                relativeLayout_msg.setTranslationX(0);
-                                relativeLayout_msg.setVisibility(View.VISIBLE);
-                                /*if (getDevices().getCurDeviceInfo() != null
+                        }
+                        findViewById(curIndexID).setTranslationX(0);
+                        findViewById(curIndexID).setVisibility(View.VISIBLE);
+                    }
+                })
+                .start();
+
+        /*if (curIndexID == relativeLayout_navi.getId()) {
+            relativeLayout_navi.animate()
+                    .translationX(Utils.getScreenWidth(this))
+                    .setDuration(300)
+                    .setInterpolator(new AccelerateInterpolator())
+                    .setListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            relativeLayout_navi.setVisibility(View.GONE);
+                            relativeLayout_touchpad.setVisibility(View.GONE);
+                            relativeLayout_msg.setVisibility(View.GONE);
+                            relativeLayout_num.setTranslationX(0);
+                            relativeLayout_num.setVisibility(View.VISIBLE);
+                            curIndexID = relativeLayout_num.getId();
+                        }
+                    })
+                    .start();
+        } else if (curIndexID == relativeLayout_num.getId()) {
+            relativeLayout_num.animate()
+                    .translationX(Utils.getScreenWidth(this))
+                    .setDuration(300)
+                    .setInterpolator(new AccelerateInterpolator())
+                    .setListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            relativeLayout_num.setVisibility(View.GONE);
+                            relativeLayout_navi.setVisibility(View.GONE);
+                            relativeLayout_msg.setVisibility(View.GONE);
+                            relativeLayout_touchpad.setTranslationX(0);
+                            relativeLayout_touchpad.setVisibility(View.VISIBLE);
+                            curIndexID = relativeLayout_touchpad.getId();
+                        }
+                    })
+                    .start();
+        } else if (curIndexID == relativeLayout_touchpad.getId()) {
+            relativeLayout_touchpad.animate()
+                    .translationX(Utils.getScreenWidth(this))
+                    .setDuration(300)
+                    .setInterpolator(new AccelerateInterpolator())
+                    .setListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            relativeLayout_num.setVisibility(View.GONE);
+                            relativeLayout_touchpad.setVisibility(View.GONE);
+                            relativeLayout_navi.setVisibility(View.GONE);
+                            relativeLayout_msg.setTranslationX(0);
+                            relativeLayout_msg.setVisibility(View.VISIBLE);
+                                if (getDevices().getCurDeviceInfo() != null
                                         && getDevices().getCurDeviceInfo().type != 56) {
                                     etComment.setVisibility(View.GONE);
                                     btnSendComment.setVisibility(View.GONE);
@@ -515,29 +562,29 @@ public class TvRemoteActivity extends BaseActivity
                                     etComment.setVisibility(View.VISIBLE);
                                     btnSendComment.setVisibility(View.VISIBLE);
                                     etComment.setInputType(InputType.TYPE_CLASS_TEXT);
-                                }*/
-                                curIndexID = relativeLayout_msg.getId();
-                            }
-                        })
-                        .start();
-            }else if (curIndexID == relativeLayout_msg.getId()) {
-                relativeLayout_msg.animate()
-                        .translationX(Utils.getScreenWidth(this))
-                        .setDuration(300)
-                        .setInterpolator(new AccelerateInterpolator())
-                        .setListener(new AnimatorListenerAdapter() {
-                            @Override
-                            public void onAnimationEnd(Animator animation) {
-                                relativeLayout_num.setVisibility(View.GONE);
-                                relativeLayout_touchpad.setVisibility(View.GONE);
-                                relativeLayout_msg.setVisibility(View.GONE);
-                                relativeLayout_navi.setTranslationX(0);
-                                relativeLayout_navi.setVisibility(View.VISIBLE);
-                                curIndexID = relativeLayout_navi.getId();
-                            }
-                        })
-                        .start();
-            }
+                                }
+                            curIndexID = relativeLayout_msg.getId();
+                        }
+                    })
+                    .start();
+        } else if (curIndexID == relativeLayout_msg.getId()) {
+            relativeLayout_msg.animate()
+                    .translationX(Utils.getScreenWidth(this))
+                    .setDuration(300)
+                    .setInterpolator(new AccelerateInterpolator())
+                    .setListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            relativeLayout_num.setVisibility(View.GONE);
+                            relativeLayout_touchpad.setVisibility(View.GONE);
+                            relativeLayout_msg.setVisibility(View.GONE);
+                            relativeLayout_navi.setTranslationX(0);
+                            relativeLayout_navi.setVisibility(View.VISIBLE);
+                            curIndexID = relativeLayout_navi.getId();
+                        }
+                    })
+                    .start();
+        }*/
     }
 
     @Override
