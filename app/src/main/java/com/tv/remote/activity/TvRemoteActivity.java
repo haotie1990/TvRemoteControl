@@ -69,6 +69,10 @@ public class TvRemoteActivity extends BaseActivity
     private int preIndex = 0;
     private boolean longPressState = false;
 
+    private String beforeText;
+    private String onText;
+    private String afterText;
+
     private Vibrator vibrator;
 
     private KeyBoardDialog keyBoardDialog = null;
@@ -634,26 +638,32 @@ public class TvRemoteActivity extends BaseActivity
     @Override
     public void beforeTextChanged(CharSequence s, int start, int count, int after) {
         Log.i("gky","beforeTextChanged------->"+s.toString());
+        beforeText = s.toString();
     }
 
     @Override
     public void onTextChanged(CharSequence s, int start, int before, int count) {
         Log.i("gky","onTextChanged------->"+s.toString());
+        onText = s.toString();
     }
 
     @Override
     public void afterTextChanged(Editable s) {
         Log.i("gky","afterTextChanged------->"+s.toString());
-        if (getDevices().getCurDeviceInfo() != null
-                && getDevices().getCurDeviceInfo().type == 56) {
-            NetUtils.getInstance().sendMsg(s.toString());
-        }
+        afterText = s.toString();
+        NetUtils.getInstance().sendMsg(s.toString());
     }
 
     @Override
     public boolean onKey(View v, int keyCode, android.view.KeyEvent event) {
         Log.i("gky","onKey::event is "+event);
-        NetUtils.getInstance().sendKey(keyCode);
+        if (event.getAction() == android.view.KeyEvent.ACTION_DOWN) {
+            if (keyCode == KeyEvent.KEYCODE_DEL && TextUtils.isEmpty(etComment.getText())) {
+                NetUtils.getInstance().sendKey(keyCode);
+            }else {
+                NetUtils.getInstance().sendKey(keyCode);
+            }
+        }
         return false;
     }
 }
